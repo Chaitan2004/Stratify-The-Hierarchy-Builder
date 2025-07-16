@@ -1,54 +1,14 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
-import { useAuth } from "../components/AuthContext";
+import { Users } from "lucide-react";
 
-function RegisterCommunity() {
-  const { isAuthenticated } = useAuth();
-
-  const [form, setForm] = useState({
-    name: "",
-    level: "",
-    motto: "",
-  });
+function Registercommunity() {
+  const [community, setCommunity] = useState({ name: "", level: "", motto: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!isAuthenticated) {
-      toast.error("⚠️ You must be logged in to create a community.");
-      return;
-    }
-
-    const { name, level, motto } = form;
-    if (!name || !level || !motto) {
-      toast.error("Please fill in all fields.");
-      return;
-    }
-
-    try {
-      const res = await fetch("http://localhost:5002/api/community/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        toast.success("🎉 Community registered!");
-        setForm({ name: "", level: "", motto: "" });
-      } else {
-        toast.error(data.error || "Failed to register community");
-      }
-    } catch (err) {
-      toast.error("Server error. Please try again.");
-    }
+    setCommunity({ ...community, [e.target.name]: e.target.value });
   };
 
   const getCommunitySizeInfo = (level) => {
@@ -66,31 +26,59 @@ function RegisterCommunity() {
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:5002/api/community/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(community),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Community registered successfully!");
+        setCommunity({ name: "", level: "", motto: "" });
+      } else {
+        toast.error(data.error || "Failed to register community");
+      }
+    } catch {
+      toast.error("Server error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-violet-100 via-white to-cyan-100">
       <Navbar />
-      <div className="max-w-xl mx-auto mt-12 p-8 bg-white shadow-2xl rounded-2xl border border-gray-200">
-        <h1 className="text-3xl font-bold mb-6 text-indigo-800">Register a Community</h1>
-        <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="max-w-xl mx-auto mt-12 p-8 bg-white/90 rounded-2xl shadow-xl border border-gray-100 animate-fade-in transition-all duration-200 hover:shadow-2xl hover:border-violet-200">
+        <div className="flex items-center gap-3 mb-2">
+          <Users size={28} className="text-violet-400" />
+          <h2 className="text-2xl font-bold text-violet-700 tracking-tight font-sans">Register a New Community</h2>
+        </div>
+        <div className="h-1 w-16 bg-gradient-to-r from-violet-400 to-cyan-400 rounded-full mb-7" />
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-600">Community Name</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 font-sans">Community Name</label>
             <input
               type="text"
               name="name"
-              value={form.name}
+              value={community.name}
               onChange={handleChange}
-              className="w-full mt-1 px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-400"
-              placeholder="Enter community name"
+              required
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-400 font-sans text-base transition-all"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-600">Community Level</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 font-sans">Community Level</label>
             <select
               name="level"
-              value={form.level}
+              value={community.level}
               onChange={handleChange}
-              className="w-full mt-1 px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-400"
+              required
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-400 font-sans text-base transition-all"
             >
               <option value="">Select level</option>
               <option value="1">Level 1</option>
@@ -98,35 +86,48 @@ function RegisterCommunity() {
               <option value="3">Level 3</option>
               <option value="4">Level 4</option>
             </select>
-            {form.level && (
-              <p className="text-sm text-indigo-600 mt-1">
-                {getCommunitySizeInfo(form.level)}
-              </p>
+            {community.level && (
+              <p className="text-sm text-violet-600 mt-1 font-sans">{getCommunitySizeInfo(community.level)}</p>
             )}
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-gray-600">Community Motto</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 font-sans">Community Motto</label>
             <input
               type="text"
               name="motto"
-              value={form.motto}
+              value={community.motto}
               onChange={handleChange}
-              className="w-full mt-1 px-4 py-2 border rounded-md focus:ring-2 focus:ring-indigo-400"
-              placeholder="What's your community about?"
+              required
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-400 font-sans text-base transition-all"
             />
           </div>
-
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-200"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-violet-600 to-cyan-500 text-white py-3 rounded-xl font-semibold shadow-lg transition-all duration-200 transform hover:from-violet-700 hover:to-cyan-600 hover:scale-105 hover:shadow-2xl active:scale-95 focus:outline-none focus:ring-2 focus:ring-violet-400 text-lg font-sans flex items-center justify-center gap-2"
           >
-            Create Community
+            {loading ? (
+              <span className="animate-pulse">Registering...</span>
+            ) : (
+              <>
+                <Users size={20} className="inline-block text-white/80" />
+                Register Community
+              </>
+            )}
           </button>
         </form>
       </div>
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.4s cubic-bezier(.4,0,.2,1);
+        }
+      `}</style>
     </div>
   );
 }
 
-export default RegisterCommunity;
+export default Registercommunity;

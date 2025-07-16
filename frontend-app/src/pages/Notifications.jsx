@@ -70,45 +70,47 @@ function Notifications() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-violet-100 via-white to-cyan-100">
       <Navbar />
 
-      <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4 text-indigo-700">Notifications</h2>
+      <div className="max-w-2xl mx-auto mt-10 p-6 bg-white/90 rounded-2xl shadow-xl border border-gray-100">
+        <h2 className="text-2xl font-bold mb-6 text-violet-700 tracking-tight font-sans">Notifications</h2>
         {notifs.length === 0 ? (
-          <p className="text-gray-500">No notifications</p>
+          <p className="text-gray-400 text-center text-lg font-sans">No notifications</p>
         ) : (
-          notifs.map((notif, idx) => (
-            <div
-              key={idx}
-              className="mb-4 p-4 border rounded shadow-sm bg-gray-50 flex justify-between items-center"
-            >
-              <div>
-                <p className="text-sm text-gray-700">{notif.message}</p>
-                <p className="text-xs text-gray-400">
-                  {new Date(notif.timestamp).toLocaleString()}
-                </p>
-              </div>
-              {notif.type === "join_request" && (
-                <div className="flex gap-2">
-                  <button
-                    className="bg-green-500 hover:bg-green-600 text-white w-8 h-8 rounded-full flex items-center justify-center"
-                    onClick={() => handleDecision("accept", notif)}
-                    title="Accept"
-                  >
-                    <Check size={18} />
-                  </button>
-                  <button
-                    className="bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center"
-                    onClick={() => handleDecision("reject", notif)}
-                    title="Reject"
-                  >
-                    <X size={18} />
-                  </button>
+          <div className="space-y-5">
+            {notifs.map((notif, idx) => (
+              <div
+                key={idx}
+                className="group mb-2 p-5 border border-gray-100 rounded-xl shadow-md bg-gradient-to-br from-white via-violet-50 to-cyan-50 flex justify-between items-center transition-all duration-200 hover:shadow-lg hover:border-violet-200"
+              >
+                <div>
+                  <p className="text-base text-gray-800 font-medium font-sans mb-1">{notif.message}</p>
+                  <p className="text-xs text-gray-400 font-sans">
+                    {new Date(notif.timestamp).toLocaleString()}
+                  </p>
                 </div>
-              )}
-            </div>
-          ))
+                {notif.type === "join_request" && (
+                  <div className="flex gap-2 ml-4">
+                    <button
+                      className="bg-green-500 hover:bg-green-600 text-white w-9 h-9 rounded-full flex items-center justify-center shadow transition-all duration-150 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-green-300"
+                      onClick={() => handleDecision("accept", notif)}
+                      title="Accept"
+                    >
+                      <Check size={20} />
+                    </button>
+                    <button
+                      className="bg-red-500 hover:bg-red-600 text-white w-9 h-9 rounded-full flex items-center justify-center shadow transition-all duration-150 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-300"
+                      onClick={() => handleDecision("reject", notif)}
+                      title="Reject"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
