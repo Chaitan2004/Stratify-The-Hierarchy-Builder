@@ -31,10 +31,10 @@ function Register() {
       setMessageType("success");
       setMessage("✅ " + data.message);
       setFormData({ username: "", email: "", password: "" });
-    } else {
-      setMessageType("error");
-      setMessage("❌ Registration failed. Try again.");
-    }
+    }  else {
+        setMessageType("error");
+        setMessage("❌ " + (data.error || "Registration failed. Try again."));
+      }
   };
 
   return (

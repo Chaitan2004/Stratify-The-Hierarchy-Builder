@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-
+import { useAuth } from "./AuthContext";
 
 function Login() {
   const [identifier, setIdentifier] = useState("");
@@ -11,7 +11,7 @@ function Login() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate(); 
-
+  const { setIsAuthenticated } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,6 +31,7 @@ function Login() {
 
       if (response.ok) {
         setMessage("✅ Login successful!");
+        setIsAuthenticated(true);
         setTimeout(() => {
           navigate("/home");
         }, 1000); // delay redirect 1 sec to show success msg

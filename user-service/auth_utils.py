@@ -5,11 +5,12 @@ from dotenv import load_dotenv
 from flask import request, jsonify
 
 load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-def generate_token(username):
+def generate_token(username,email):
     payload = {
         "username": username,
+        "email": email,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7)
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
