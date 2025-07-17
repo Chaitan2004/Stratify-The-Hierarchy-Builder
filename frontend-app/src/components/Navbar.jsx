@@ -20,6 +20,7 @@ function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
     const fetchUsername = async () => {
@@ -39,6 +40,21 @@ function Navbar() {
       }
     };
     fetchUsername();
+  }, []);
+
+  useEffect(() => {
+    // Fetch notifications and count non-system ones
+    fetch("http://localhost:5003/api/notify/fetch", {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const count = data.filter((n) => n.type !== "system").length;
+          setNotifCount(count);
+        }
+      })
+      .catch(() => setNotifCount(0));
   }, []);
 
   useEffect(() => {
@@ -114,15 +130,35 @@ function Navbar() {
       {/* Desktop Nav */}
       <div className="hidden lg:flex gap-2 xl:gap-6 items-center text-base font-medium text-gray-700">
         {navLinks.map((link) => (
-          <Link
-            key={link.to}
-            to={link.to}
-            className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-violet-100 hover:text-violet-700 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-400"
-            tabIndex={0}
-            aria-label={link.label}
-          >
-            {link.icon} <span className="hidden md:inline">{link.label}</span>
-          </Link>
+          link.label === "Notifications" ? (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-violet-100 hover:text-violet-700 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-400 relative"
+              tabIndex={0}
+              aria-label={link.label}
+            >
+              <span className="relative flex items-center">
+                {link.icon}
+                {notifCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow">
+                    {notifCount}
+                  </span>
+                )}
+              </span>
+              <span className="hidden md:inline">{link.label}</span>
+            </Link>
+          ) : (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-violet-100 hover:text-violet-700 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-violet-400"
+              tabIndex={0}
+              aria-label={link.label}
+            >
+              {link.icon} <span className="hidden md:inline">{link.label}</span>
+            </Link>
+          )
         ))}
       </div>
       {/* Mobile Hamburger */}

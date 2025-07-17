@@ -348,4 +348,59 @@ def handle_join_response():
     return jsonify({"message": f"User {decision}ed successfully"}), 200
 
 
+@community_bp.route("/my-communities", methods=["GET"])
+def get_my_communities():
+    token = request.cookies.get("token")
+    if not token:
+        return jsonify({"error": "Missing token"}), 401
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except Exception:
+        return jsonify({"error": "Invalid token"}), 401
+    username = payload.get("username")
+    if not username:
+        return jsonify({"error": "User not found in token"}), 401
+    query = """
+    MATCH (u:UserNode {username: $username})-[:CREATED|MEMBER_OF]->(c:Community)
+    WITH DISTINCT c
+    OPTIONAL MATCH (leader:UserNode)-[:CREATED]->(c)
+    RETURN c, leader.name AS leader
+    """
+    with driver.session(database="communities") as session:
+        result = session.run(query, username=username)
+        communities = []
+        for record in result:
+            c = record["c"]
+            leader = record["leader"]
+            communities.append({
+                "name": c.get("name"),
+                "level": c.get("level"),
+                "motto": c.get("motto"),
+                "leader": leader
+            })
+    return jsonify(communities)
+
+
+@community_bp.route("/user/update-username", methods=["POST"])
+def update_username_community():
+    data = request.json
+    email = data.get("email")
+    new_username = data.get("new_username")
+    if not email or not new_username:
+        return jsonify({"error": "Both email and new_username are required"}), 400
+    try:
+        with driver.session(database="communities") as session:
+            session.run(
+                """
+                MATCH (u:UserNode {email: $email})
+                SET u.username = $new_username
+                RETURN u
+                """,
+                email=email, new_username=new_username
+            )
+        return jsonify({"message": "Username updated in community service"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 

@@ -7,6 +7,7 @@ import Registercommunity from "./pages/Registercommunity";
 import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
 import Details from "./pages/Details";
+import Communities from "./pages/Communities";
 import "./index.css";
 
 function App() {
@@ -53,6 +54,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Details />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/your-communities"
+          element={
+            <ProtectedRoute>
+              <Communities />
             </ProtectedRoute>
           }
         />

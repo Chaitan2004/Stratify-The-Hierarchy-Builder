@@ -106,6 +106,8 @@ def verify_token_for_home():
     payload, error_response, status = verify_jwt_token()
     if error_response:
         return error_response, status
+    if not payload or "username" not in payload:
+        return jsonify({"error": "User not found in token"}), 401
     return jsonify({"username": payload["username"]})
 
 @user_bp.route("/logout", methods=["POST"])
@@ -153,6 +155,20 @@ def update_username():
             """,
             current_username=current_username, new_username=new_username
         )
+        # Get user's email for community-service update
+        user_email = user.get("email") if user else None
+    # Notify community-service of username change
+    import requests
+    try:
+        community_service_url = "http://localhost:5002/api/community/user/update-username"  # Adjust port if needed
+        resp = requests.post(
+            community_service_url,
+            json={"email": user_email, "new_username": new_username},
+            timeout=3
+        )
+        print(f"Community-service response: {resp.status_code} {resp.text}")
+    except Exception as e:
+        print(f"Failed to update username in community-service: {e}")
     # Delete the existing token and instruct client to redirect to login
     response = make_response(jsonify({
         "message": "Username updated. Please log in again.",
