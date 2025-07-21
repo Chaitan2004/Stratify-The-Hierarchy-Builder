@@ -364,19 +364,21 @@ def get_my_communities():
     MATCH (u:UserNode {username: $username})-[:CREATED|MEMBER_OF]->(c:Community)
     WITH DISTINCT c
     OPTIONAL MATCH (leader:UserNode)-[:CREATED]->(c)
-    RETURN c, leader.name AS leader
+    RETURN c, leader.username AS leader_username, leader.name AS leader
     """
     with driver.session(database="communities") as session:
         result = session.run(query, username=username)
         communities = []
         for record in result:
             c = record["c"]
-            leader = record["leader"]
+            leader_username = record["leader_username"]
+            leader_name = record["leader"]
             communities.append({
                 "name": c.get("name"),
                 "level": c.get("level"),
                 "motto": c.get("motto"),
-                "leader": leader
+                "leader_username": leader_username,
+                "leader": leader_name
             })
     return jsonify(communities)
 
@@ -403,4 +405,224 @@ def update_username_community():
         return jsonify({"error": str(e)}), 500
 
 
+@community_bp.route("/leader-node-and-tree", methods=["GET"])
+def get_leader_and_tree():
+    community_name = request.args.get("community")
+    if not community_name:
+        return jsonify({"error": "Community name is required"}), 400
+    with driver.session(database="communities") as session:
+        # Get leader node
+        leader_result = session.run(
+            """
+            MATCH (leader:UserNode)-[:CREATED]->(c:Community {name: $community_name})
+            RETURN leader.username AS username, leader.email AS email, leader.name AS name
+            """,
+            community_name=community_name
+        )
+        leader = leader_result.single()
+        if not leader:
+            return jsonify({"error": "Leader not found"}), 404
+        # Get all nodes involved in CHILD_OF relationships for this community
+        nodes = {}
+        rels = []
+        result = session.run(
+            """
+            MATCH (u:UserNode)-[r:CHILD_OF {community: $community_name}]->(v:UserNode)
+            RETURN u.username AS from_username, u.email AS from_email, u.name AS from_name,
+                   v.username AS to_username, v.email AS to_email, v.name AS to_name
+            """,
+            community_name=community_name
+        )
+        for record in result:
+            # Add both source and target nodes
+            for key in [("from_username", "from_email", "from_name"), ("to_username", "to_email", "to_name")]:
+                uname, email, name = record[key[0]], record[key[1]], record[key[2]]
+                if uname and uname not in nodes:
+                    nodes[uname] = {
+                        "username": uname,
+                        "email": email,
+                        "name": name
+                    }
+            # Add relationship
+            rels.append({
+                "from": record["from_username"],
+                "to": record["to_username"],
+                "community": community_name
+            })
+        # Always include the leader node
+        if leader["username"] not in nodes:
+            nodes[leader["username"]] = {
+                "username": leader["username"],
+                "email": leader["email"],
+                "name": leader["name"]
+            }
+        print("Leader:", leader)
+        print("Nodes:", nodes)
+        print("Relationships:", rels)
+        return jsonify({
+            "leader": dict(leader),
+            "nodes": list(nodes.values()),
+            "relationships": rels
+        })
 
+
+@community_bp.route("/create-child-of", methods=["POST"])
+def create_child_of():
+    data = request.json
+    community_name = data.get("community")
+    from_username = data.get("from")
+    to_username = data.get("to")
+    if not community_name or not from_username or not to_username:
+        return jsonify({"error": "Missing required fields"}), 400
+    try:
+        with driver.session(database="communities") as session:
+            session.run(
+                """
+                MATCH (from:UserNode {username: $from_username})
+                MATCH (to:UserNode {username: $to_username})
+                MATCH (c:Community {name: $community_name})
+                MERGE (from)-[r:CHILD_OF {community: $community_name}]->(to)
+                RETURN from, to, r
+                """,
+                from_username=from_username,
+                to_username=to_username,
+                community_name=community_name
+            )
+        return jsonify({"message": "CHILD_OF relationship created"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@community_bp.route("/delete-user-node", methods=["POST"])
+def delete_user_node():
+    data = request.json
+    community_name = data.get("community")
+    username = data.get("username")
+    if not community_name or not username:
+        return jsonify({"error": "Missing community or username"}), 400
+    try:
+        with driver.session(database="communities") as session:
+            # Delete all CHILD_OF relationships from or to this user in this community
+            session.run(
+                """
+                MATCH (u:UserNode {username: $username})
+                OPTIONAL MATCH (u)-[r1:CHILD_OF {community: $community_name}]->()
+                OPTIONAL MATCH ()-[r2:CHILD_OF {community: $community_name}]->(u)
+                DELETE r1, r2
+                """,
+                username=username,
+                community_name=community_name
+            )
+        return jsonify({"message": "Node and its relationships deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@community_bp.route("/get-user-details", methods=["GET"])
+def get_user_details_by_username():
+    username = request.args.get("username")
+    if not username:
+        return jsonify({"error": "Missing username"}), 400
+    with driver.session(database="communities") as session:
+        result = session.run(
+            """
+            MATCH (u:UserNode {username: $username})
+            RETURN u
+            """,
+            username=username
+        )
+        record = result.single()
+        if not record:
+            return jsonify({"error": "User not found"}), 404
+        user_node = record["u"]
+        user_data = {
+            "name": user_node.get("name"),
+            "public_email": user_node.get("public_email"),
+            "dob": user_node.get("dob"),
+            "age": user_node.get("age"),
+            "phone": user_node.get("phone"),
+            "gender": user_node.get("gender"),
+            "location": user_node.get("location"),
+            "bio": user_node.get("bio"),
+            "linkedin": user_node.get("linkedin"),
+            "github": user_node.get("github"),
+            "twitter": user_node.get("twitter"),
+            "website": user_node.get("website")
+        }
+        return jsonify(user_data), 200
+
+@community_bp.route("/delete-community", methods=["POST"])
+def delete_community():
+    data = request.json
+    community_name = data.get("community")
+    if not community_name:
+        return jsonify({"error": "Missing community name"}), 400
+    try:
+        with driver.session(database="communities") as session:
+            # Delete all CHILD_OF relationships with this community name
+            session.run(
+                """
+                MATCH ()-[r:CHILD_OF {community: $community_name}]->()
+                DELETE r
+                """,
+                community_name=community_name
+            )
+            # Delete the Community node and all relationships
+            session.run(
+                """
+                MATCH (c:Community {name: $community_name})
+                DETACH DELETE c
+                """,
+                community_name=community_name
+            )
+        return jsonify({"message": "Community and related relationships deleted"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@community_bp.route("/members", methods=["GET"])
+def get_community_members():
+    community_name = request.args.get("community")
+    if not community_name:
+        return jsonify({"error": "Missing community name"}), 400
+    with driver.session(database="communities") as session:
+        # Get leader
+        leader_result = session.run(
+            """
+            MATCH (u:UserNode)-[:CREATED]->(c:Community {name: $community_name})
+            RETURN u.username AS username, u.name AS name
+            """,
+            community_name=community_name
+        )
+        leader = leader_result.single()
+        # Get members
+        members_result = session.run(
+            """
+            MATCH (u:UserNode)-[:MEMBER_OF]->(c:Community {name: $community_name})
+            RETURN u.username AS username, u.name AS name
+            """,
+            community_name=community_name
+        )
+        members = [dict(record) for record in members_result]
+        return jsonify({
+            "leader": dict(leader) if leader else None,
+            "members": members
+        })
+
+@community_bp.route("/remove-member", methods=["POST"])
+def remove_member():
+    data = request.json
+    community_name = data.get("community")
+    username = data.get("username")
+    if not community_name or not username:
+        return jsonify({"error": "Missing community or username"}), 400
+    try:
+        with driver.session(database="communities") as session:
+            session.run(
+                """
+                MATCH (u:UserNode {username: $username})-[r:MEMBER_OF]->(c:Community {name: $community_name})
+                DELETE r
+                """,
+                username=username,
+                community_name=community_name
+            )
+        return jsonify({"message": "Member removed from community"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
