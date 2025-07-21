@@ -33,3 +33,27 @@ The Stratify Team
         smtp.starttls()
         smtp.login("srichaitan26@gmail.com", "enmb lrjd xoxf hryi")  # App password
         smtp.send_message(msg)
+
+def send_reset_email(to_email, reset_link):
+    msg = EmailMessage()
+    msg["Subject"] = "Stratify Password Reset"
+    msg["From"] = "Stratify"
+    msg["To"] = to_email
+    body = f"""
+Hi there,
+
+We received a request to reset your Stratify password.
+
+Click the link below to reset your password:
+👉 {reset_link}
+
+If you didn't request this, you can safely ignore this message.
+
+Thanks,
+The Stratify Team
+"""
+    msg.set_content(body)
+    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+        smtp.starttls()
+        smtp.login("srichaitan26@gmail.com", "enmb lrjd xoxf hryi")  # App password
+        smtp.send_message(msg)

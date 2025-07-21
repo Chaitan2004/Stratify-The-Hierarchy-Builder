@@ -8,6 +8,8 @@ import Notifications from "./pages/Notifications";
 import Search from "./pages/Search";
 import Details from "./pages/Details";
 import Communities from "./pages/Communities";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 import "./index.css";
 
 function App() {
@@ -16,6 +18,8 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/signin" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         {/* 🛡️ Protected routes */}
         <Route
           path="/home"

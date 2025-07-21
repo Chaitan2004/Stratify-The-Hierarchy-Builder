@@ -4,7 +4,10 @@ from email_utils import send_verification_email
 import uuid
 from passlib.hash import bcrypt
 from auth_utils import generate_token, verify_jwt_token
-
+from redis_store import store_token as store_reset_token
+from email_utils import send_reset_email
+import secrets
+from redis_store import verify_token as verify_reset_token
 
 
 user_bp = Blueprint("user", __name__)
@@ -128,15 +131,8 @@ def update_username():
     if not payload or "username" not in payload:
         return jsonify({"error": "User not found in token"}), 401
     current_username = payload["username"]
-    # Check if new username already exists
-    check_query = """
-    MATCH (u:User {username: $new_username})
-    RETURN u
-    """
+   
     with driver.session(database="users") as session:
-        result = session.run(check_query, new_username=new_username)
-        if result.single():
-            return jsonify({"error": "Username already taken"}), 409
         # Get current user
         get_user_query = """
         MATCH (u:User {username: $current_username})
@@ -251,3 +247,58 @@ def get_user_info():
             "username": user["username"],
             "email": user["email"]
         })
+
+@user_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.json
+    email = data.get('email')
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    # Find user by email
+    query = """
+    MATCH (u:User)
+    WHERE u.email = $email
+    RETURN u.username AS username, u.email AS email
+    """
+    with driver.session(database="users") as session:
+        result = session.run(query, email=email)
+        user = result.single()
+    if not user:
+        # For security, always return success
+        return jsonify({'message': 'If an account exists, a reset link has been sent to your email.'}), 200
+    # Generate token
+    token = secrets.token_urlsafe(32)
+    # Store token in Redis with 1 hour expiry
+    store_reset_token(token, {'email': email}, expiry=3600)
+    # Send reset email
+    reset_link = f"http://localhost:5174/reset-password?token={token}"
+    send_reset_email(email, reset_link)
+    print(f"[Password Reset] Sent to {email}: {reset_link}")
+    return jsonify({'message': 'If an account exists, a reset link has been sent to your email.'}), 200
+
+@user_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json
+    token = data.get('token')
+    new_password = data.get('password')
+    if not token or not new_password:
+        return jsonify({'error': 'Token and new password are required'}), 400
+    # Validate token
+    token_data = verify_reset_token(token)
+    if not token_data or 'email' not in token_data:
+        return jsonify({'error': 'Invalid or expired token'}), 400
+    email = token_data['email']
+    # Update password in DB
+    hashed = bcrypt.hash(new_password)
+    query = """
+    MATCH (u:User {email: $email})
+    SET u.password = $hashed
+    RETURN u
+    """
+    with driver.session(database="users") as session:
+        result = session.run(query, email=email, hashed=hashed)
+        user = result.single()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    # Invalidate token
+    return jsonify({'message': 'Password reset successful!'}), 200
