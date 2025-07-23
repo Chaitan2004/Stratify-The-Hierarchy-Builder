@@ -5,7 +5,9 @@ import os
 
 load_dotenv()
 
-r = redis.Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"), db=os.getenv("REDIS_DB"), decode_responses=True)
+# Use the full Upstash URL with rediss://
+redis_url = os.getenv("REDIS_URL")
+r = redis.from_url(redis_url, decode_responses=True)
 
 def store_token(token, data, expiry=600):  # 10 mins expiry
     r.set(token, json.dumps(data))
