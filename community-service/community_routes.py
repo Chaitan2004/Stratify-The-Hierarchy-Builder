@@ -12,6 +12,9 @@ COMMUNITY_URL = os.getenv("COMMUNITY_URL")
 USER_URL = os.getenv("USER_URL")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
+NODE_LABEL_USER = "communityservice_usernode"
+NODE_LABEL_COMMUNITY = "communityservice_community"
+
 community_bp = Blueprint("community", __name__)
 SECRET_KEY = os.getenv("SECRET_KEY")
 
@@ -34,9 +37,9 @@ def get_user_details():
     except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid token"}), 401
 
-    with driver.session(database="communities") as session:
-        result = session.run("""
-            MERGE (u:UserNode {email: $email})
+    with driver.session() as session:
+        result = session.run(f"""
+            MERGE (u:{NODE_LABEL_USER} {{email: $email}})
             ON CREATE SET u.public_email = $email
             ON CREATE SET u.username = $username
             RETURN u
@@ -82,15 +85,15 @@ def update_user():
     else:
         new_public_email = None
 
-    query = """
-    MERGE (u:UserNode {email: $email})
+    query = f"""
+    MERGE (u:{NODE_LABEL_USER} {{email: $email}})
     SET u += $data
     """
     if new_public_email:
         query += "\nSET u.public_email = $public_email"
     query += "\nRETURN u"
 
-    with driver.session(database="communities") as session:
+    with driver.session() as session:
         try:
             session.run(query, email=email, data=data, public_email=new_public_email)
             return jsonify({"message": "Profile updated successfully"}), 200
@@ -128,18 +131,18 @@ def register_community():
     if max_size is None:
         return jsonify({"error": "Invalid level"}), 400
 
-    with driver.session(database="communities") as session:
+    with driver.session() as session:
         try:
             # ✅ Create community and link with creator
-            session.run("""
-                MERGE (u:UserNode {email: $creator_email})
-                CREATE (c:Community {
+            session.run(f"""
+                MERGE (u:{NODE_LABEL_USER} {{email: $creator_email}})
+                CREATE (c:{NODE_LABEL_COMMUNITY} {{
                     name: $name,
                     level: $level,
                     motto: $motto,
                     max_size: $max_size,
                     created_at: datetime()
-                })
+                }})
                 MERGE (u)-[:CREATED]->(c)
             """, creator_email=creator_email, name=name, level=level, motto=motto, max_size=max_size)
 
@@ -162,11 +165,11 @@ def search_communities():
 
     search = request.args.get("q", "").lower()
 
-    with driver.session(database="communities") as session:
-        result = session.run("""
-            MATCH (c:Community)<-[:CREATED]-(u:UserNode)
+    with driver.session() as session:
+        result = session.run(f"""
+            MATCH (c:{NODE_LABEL_COMMUNITY})<-[:CREATED]-(u:{NODE_LABEL_USER})
             WHERE toLower(c.name) CONTAINS $search
-            OPTIONAL MATCH (u2:UserNode {email: $current_user})
+            OPTIONAL MATCH (u2:{NODE_LABEL_USER} {{email: $current_user}})
             OPTIONAL MATCH (u2)-[:MEMBER_OF]->(c)
             RETURN 
                 c.name AS name,
@@ -209,11 +212,11 @@ def request_join():
         return jsonify({"error": "Community name is required"}), 400
 
     try:
-        with driver.session(database="communities") as session:
+        with driver.session() as session:
             # Step 1: Check all conditions and get creator email
-            result = session.run("""
-                MATCH (c:Community {name: $name})<-[:CREATED]-(creator:UserNode)
-                OPTIONAL MATCH (u:UserNode {email: $email})-[:REQUESTED]->(c)
+            result = session.run(f"""
+                MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $name}})<-[:CREATED]-(creator:{NODE_LABEL_USER})
+                OPTIONAL MATCH (u:{NODE_LABEL_USER} {{email: $email}})-[:REQUESTED]->(c)
                 OPTIONAL MATCH (u)-[:MEMBER_OF]->(c)
                 RETURN 
                     creator.email AS creator_email,
@@ -236,15 +239,15 @@ def request_join():
             creator_email = record["creator_email"]
 
             # Step 2: Create request relationship
-            session.run("""
-                MERGE (u:UserNode {email: $email})
-                MERGE (c:Community {name: $name})
+            session.run(f"""
+                MERGE (u:{NODE_LABEL_USER} {{email: $email}})
+                MERGE (c:{NODE_LABEL_COMMUNITY} {{name: $name}})
                 MERGE (u)-[:REQUESTED]->(c)
             """, email=user_email, name=community_name)
 
             # Step 3: Fetch user's name for message
-            name_result = session.run("""
-                MATCH (u:UserNode {email: $email})
+            name_result = session.run(f"""
+                MATCH (u:{NODE_LABEL_USER} {{email: $email}})
                 RETURN u.name AS name
             """, email=user_email)
 
@@ -262,9 +265,9 @@ def request_join():
         if response.status_code != 201:
             print("Notification failed:", response.text)
             # Rollback request edge if notify fails
-            with driver.session(database="communities") as session:
-                session.run("""
-                    MATCH (u:UserNode {email: $email})-[r:REQUESTED]->(c:Community {name: $name})
+            with driver.session() as session:
+                session.run(f"""
+                    MATCH (u:{NODE_LABEL_USER} {{email: $email}})-[r:REQUESTED]->(c:{NODE_LABEL_COMMUNITY} {{name: $name}})
                     DELETE r
                 """, email=user_email, name=community_name)
 
@@ -275,9 +278,9 @@ def request_join():
     except Exception as e:
         # Rollback on any exception
         try:
-            with driver.session(database="communities") as session:
-                session.run("""
-                    MATCH (u:UserNode {email: $email})-[r:REQUESTED]->(c:Community {name: $name})
+            with driver.session() as session:
+                session.run(f"""
+                    MATCH (u:{NODE_LABEL_USER} {{email: $email}})-[r:REQUESTED]->(c:{NODE_LABEL_COMMUNITY} {{name: $name}})
                     DELETE r
                 """, email=user_email, name=community_name)
         except:
@@ -312,18 +315,18 @@ def handle_join_response():
         return jsonify({"error": "Missing or invalid data"}), 400
     
 
-    with driver.session(database="communities") as session:
+    with driver.session() as session:
         if decision == "accept":
-            session.run("""
-                MATCH (c:Community {name: $community})
-                MATCH (r:UserNode {username: $requester})-[req:REQUESTED]->(c)
+            session.run(f"""
+                MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $community}})
+                MATCH (r:{NODE_LABEL_USER} {{username: $requester}})-[req:REQUESTED]->(c)
                 DELETE req
                 MERGE (r)-[:MEMBER_OF]->(c)
             """, community=community, requester=requester)
         else:
-            session.run("""
-                MATCH (c:Community {name: $community})
-                MATCH (r:UserNode {username: $requester})-[req:REQUESTED]->(c)
+            session.run(f"""
+                MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $community}})
+                MATCH (r:{NODE_LABEL_USER} {{username: $requester}})-[req:REQUESTED]->(c)
                 DELETE req
             """, community=community, requester=requester)
 
@@ -370,13 +373,13 @@ def get_my_communities():
     username = payload.get("username")
     if not username:
         return jsonify({"error": "User not found in token"}), 401
-    query = """
-    MATCH (u:UserNode {username: $username})-[:CREATED|MEMBER_OF]->(c:Community)
+    query = f"""
+    MATCH (u:{NODE_LABEL_USER} {{username: $username}})-[:CREATED|MEMBER_OF]->(c:{NODE_LABEL_COMMUNITY})
     WITH DISTINCT c
-    OPTIONAL MATCH (leader:UserNode)-[:CREATED]->(c)
+    OPTIONAL MATCH (leader:{NODE_LABEL_USER})-[:CREATED]->(c)
     RETURN c, leader.username AS leader_username, leader.name AS leader
     """
-    with driver.session(database="communities") as session:
+    with driver.session() as session:
         result = session.run(query, username=username)
         communities = []
         for record in result:
@@ -401,10 +404,10 @@ def update_username_community():
     if not email or not new_username:
         return jsonify({"error": "Both email and new_username are required"}), 400
     try:
-        with driver.session(database="communities") as session:
+        with driver.session() as session:
             session.run(
-                """
-                MATCH (u:UserNode {email: $email})
+                f"""
+                MATCH (u:{NODE_LABEL_USER} {{email: $email}})
                 SET u.username = $new_username
                 RETURN u
                 """,
@@ -420,11 +423,11 @@ def get_leader_and_tree():
     community_name = request.args.get("community")
     if not community_name:
         return jsonify({"error": "Community name is required"}), 400
-    with driver.session(database="communities") as session:
+    with driver.session() as session:
         # Get leader node
         leader_result = session.run(
-            """
-            MATCH (leader:UserNode)-[:CREATED]->(c:Community {name: $community_name})
+            f"""
+            MATCH (leader:{NODE_LABEL_USER})-[:CREATED]->(c:{NODE_LABEL_COMMUNITY} {{name: $community_name}})
             RETURN leader.username AS username, leader.email AS email, leader.name AS name
             """,
             community_name=community_name
@@ -436,8 +439,8 @@ def get_leader_and_tree():
         nodes = {}
         rels = []
         result = session.run(
-            """
-            MATCH (u:UserNode)-[r:CHILD_OF {community: $community_name}]->(v:UserNode)
+            f"""
+            MATCH (u:{NODE_LABEL_USER})-[r:CHILD_OF {{community: $community_name}}]->(v:{NODE_LABEL_USER})
             RETURN u.username AS from_username, u.email AS from_email, u.name AS from_name,
                    v.username AS to_username, v.email AS to_email, v.name AS to_name
             """,
@@ -485,13 +488,13 @@ def create_child_of():
     if not community_name or not from_username or not to_username:
         return jsonify({"error": "Missing required fields"}), 400
     try:
-        with driver.session(database="communities") as session:
+        with driver.session() as session:
             session.run(
-                """
-                MATCH (from:UserNode {username: $from_username})
-                MATCH (to:UserNode {username: $to_username})
-                MATCH (c:Community {name: $community_name})
-                MERGE (from)-[r:CHILD_OF {community: $community_name}]->(to)
+                f"""
+                MATCH (from:{NODE_LABEL_USER} {{username: $from_username}})
+                MATCH (to:{NODE_LABEL_USER} {{username: $to_username}})
+                MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $community_name}})
+                MERGE (from)-[r:CHILD_OF {{community: $community_name}}]->(to)
                 RETURN from, to, r
                 """,
                 from_username=from_username,
@@ -510,13 +513,13 @@ def delete_user_node():
     if not community_name or not username:
         return jsonify({"error": "Missing community or username"}), 400
     try:
-        with driver.session(database="communities") as session:
+        with driver.session() as session:
             # Delete all CHILD_OF relationships from or to this user in this community
             session.run(
-                """
-                MATCH (u:UserNode {username: $username})
-                OPTIONAL MATCH (u)-[r1:CHILD_OF {community: $community_name}]->()
-                OPTIONAL MATCH ()-[r2:CHILD_OF {community: $community_name}]->(u)
+                f"""
+                MATCH (u:{NODE_LABEL_USER} {{username: $username}})
+                OPTIONAL MATCH (u)-[r1:CHILD_OF {{community: $community_name}}]->()
+                OPTIONAL MATCH ()-[r2:CHILD_OF {{community: $community_name}}]->(u)
                 DELETE r1, r2
                 """,
                 username=username,
@@ -531,10 +534,10 @@ def get_user_details_by_username():
     username = request.args.get("username")
     if not username:
         return jsonify({"error": "Missing username"}), 400
-    with driver.session(database="communities") as session:
+    with driver.session() as session:
         result = session.run(
-            """
-            MATCH (u:UserNode {username: $username})
+            f"""
+            MATCH (u:{NODE_LABEL_USER} {{username: $username}})
             RETURN u
             """,
             username=username
@@ -566,7 +569,7 @@ def delete_community():
     if not community_name:
         return jsonify({"error": "Missing community name"}), 400
     try:
-        with driver.session(database="communities") as session:
+        with driver.session() as session:
             # Delete all CHILD_OF relationships with this community name
             session.run(
                 """
@@ -577,8 +580,8 @@ def delete_community():
             )
             # Delete the Community node and all relationships
             session.run(
-                """
-                MATCH (c:Community {name: $community_name})
+                f"""
+                MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $community_name}})
                 DETACH DELETE c
                 """,
                 community_name=community_name
@@ -592,11 +595,11 @@ def get_community_members():
     community_name = request.args.get("community")
     if not community_name:
         return jsonify({"error": "Missing community name"}), 400
-    with driver.session(database="communities") as session:
+    with driver.session() as session:
         # Get leader
         leader_result = session.run(
-            """
-            MATCH (u:UserNode)-[:CREATED]->(c:Community {name: $community_name})
+            f"""
+            MATCH (u:{NODE_LABEL_USER})-[:CREATED]->(c:{NODE_LABEL_COMMUNITY} {{name: $community_name}})
             RETURN u.username AS username, u.name AS name
             """,
             community_name=community_name
@@ -604,8 +607,8 @@ def get_community_members():
         leader = leader_result.single()
         # Get members
         members_result = session.run(
-            """
-            MATCH (u:UserNode)-[:MEMBER_OF]->(c:Community {name: $community_name})
+            f"""
+            MATCH (u:{NODE_LABEL_USER})-[:MEMBER_OF]->(c:{NODE_LABEL_COMMUNITY} {{name: $community_name}})
             RETURN u.username AS username, u.name AS name
             """,
             community_name=community_name
@@ -624,10 +627,10 @@ def remove_member():
     if not community_name or not username:
         return jsonify({"error": "Missing community or username"}), 400
     try:
-        with driver.session(database="communities") as session:
+        with driver.session() as session:
             session.run(
-                """
-                MATCH (u:UserNode {username: $username})-[r:MEMBER_OF]->(c:Community {name: $community_name})
+                f"""
+                MATCH (u:{NODE_LABEL_USER} {{username: $username}})-[r:MEMBER_OF]->(c:{NODE_LABEL_COMMUNITY} {{name: $community_name}})
                 DELETE r
                 """,
                 username=username,

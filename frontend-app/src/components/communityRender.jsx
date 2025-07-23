@@ -716,8 +716,8 @@ export default function CommunityRender({ leaderNode, communityName, currentUser
           </div>
         </div>
       )}
-      {/* Show Members button at bottom right */}
-      <div className="absolute right-6 bottom-6 z-20">
+      {/* Show Members button at bottom left */}
+      <div className="absolute left-6 bottom-6 z-20">
         <button
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white font-semibold shadow hover:bg-violet-700 transition"
           onClick={handleShowMembers}

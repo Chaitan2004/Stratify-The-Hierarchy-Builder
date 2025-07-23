@@ -25,7 +25,7 @@ Hi there,
 Thanks for signing up for Stratify! 🚀
 
 Please verify your email by clicking the link below:
-👉 {BACKEND_URL}/api/verify/{token}
+👉 {BACKEND_URL}/api/user/verify/{token}
 
 If you didn't request this, you can safely ignore this message.
 

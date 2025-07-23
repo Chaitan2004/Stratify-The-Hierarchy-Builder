@@ -16,6 +16,7 @@ load_dotenv()
 COMMUNITY_URL = os.getenv("COMMUNITY_URL")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
+NODE_LABEL = "UserService"
 
 user_bp = Blueprint("user", __name__)
 
@@ -37,13 +38,13 @@ def register():
         return jsonify({"error": "All fields are required"}), 400
 
     # Check if email already exists
-    check_query = """
-    MATCH (u:User)
+    check_query = f"""
+    MATCH (u:{NODE_LABEL})
     WHERE u.email = $email
     RETURN u
     """
 
-    with driver.session(database="users") as session:
+    with driver.session() as session:
         result = session.run(check_query, email=email)
         if result.single():
             return jsonify({"error": "Email already registered"}), 409
@@ -63,14 +64,16 @@ def register():
 
 @user_bp.route("/verify/<token>", methods=["GET"])
 def verify(token):
+    print(f"[Debug] /verify called with token: {token}", flush=True)
     user = verify_token(token)
+    print(f"[Debug] verify_token returned: {user}", flush=True)
     if user:
-        with driver.session(database="users") as session:
-            session.run("""
-                MERGE (u:User {username: $username})  // username is now the primary key
+        with driver.session() as session:
+            session.run(f"""
+                MERGE (u:{NODE_LABEL} {{username: $username}})
                 SET u.email = $email, u.password = $password
             """, username=user['username'], email=user['email'], password=user['password'])
-        return "✅ Email verified and user registered!"
+        return "✅ Your email has been verified and your account is now registered! You can now sign in using the credentials you provided."
     else:
         return "❌ Invalid or expired token"
 
@@ -83,13 +86,13 @@ def signin():
     if not identifier or not password:
         return jsonify({"error": "Missing credentials"}), 400
 
-    query = """
-    MATCH (u:User)
+    query = f"""
+    MATCH (u:{NODE_LABEL})
     WHERE u.email = $identifier OR u.username = $identifier
     RETURN u.username AS username, u.password AS password, u.email AS email
     """
 
-    with driver.session(database="users") as session:
+    with driver.session() as session:
         result = session.run(query, identifier=identifier)
         user = result.single()
 
@@ -143,10 +146,10 @@ def update_username():
         return jsonify({"error": "User not found in token"}), 401
     current_username = payload["username"]
    
-    with driver.session(database="users") as session:
+    with driver.session() as session:
         # Get current user
-        get_user_query = """
-        MATCH (u:User {username: $current_username})
+        get_user_query = f"""
+        MATCH (u:{NODE_LABEL} {{username: $current_username}})
         RETURN u.username AS username, u.email AS email
         """
         user_result = session.run(get_user_query, current_username=current_username)
@@ -155,8 +158,8 @@ def update_username():
             return jsonify({"error": "User not found"}), 404
         # Actually update username
         session.run(
-            """
-            MATCH (u:User {username: $current_username})
+            f"""
+            MATCH (u:{NODE_LABEL} {{username: $current_username}})
             SET u.username = $new_username
             RETURN u
             """,
@@ -205,19 +208,19 @@ def update_password():
         return jsonify({"error": "User not found in token"}), 401
     username = payload["username"]
     # Get user and verify current password
-    query = """
-    MATCH (u:User {username: $username})
+    query = f"""
+    MATCH (u:{NODE_LABEL} {{username: $username}})
     RETURN u.password AS password, u.email AS email
     """
-    with driver.session(database="users") as session:
+    with driver.session() as session:
         result = session.run(query, username=username)
         user = result.single()
         if not user or not user.get("password") or not bcrypt.verify(current_password, user["password"]):
             return jsonify({"error": "Current password incorrect"}), 401
         # Update password
         hashed_new = bcrypt.hash(new_password)
-        update_query = """
-        MATCH (u:User {username: $username})
+        update_query = f"""
+        MATCH (u:{NODE_LABEL} {{username: $username}})
         SET u.password = $hashed_new
         RETURN u
         """
@@ -245,11 +248,11 @@ def get_user_info():
     username = payload.get("username") if payload else None
     if not username:
         return jsonify({"error": "User not found in token"}), 401
-    query = """
-    MATCH (u:User {username: $username})
+    query = f"""
+    MATCH (u:{NODE_LABEL} {{username: $username}})
     RETURN u.username AS username, u.email AS email
     """
-    with driver.session(database="users") as session:
+    with driver.session() as session:
         result = session.run(query, username=username)
         user = result.single()
         if not user:
@@ -266,12 +269,12 @@ def forgot_password():
     if not email:
         return jsonify({'error': 'Email is required'}), 400
     # Find user by email
-    query = """
-    MATCH (u:User)
+    query = f"""
+    MATCH (u:{NODE_LABEL})
     WHERE u.email = $email
     RETURN u.username AS username, u.email AS email
     """
-    with driver.session(database="users") as session:
+    with driver.session() as session:
         result = session.run(query, email=email)
         user = result.single()
     if not user:
@@ -301,12 +304,12 @@ def reset_password():
     email = token_data['email']
     # Update password in DB
     hashed = bcrypt.hash(new_password)
-    query = """
-    MATCH (u:User {email: $email})
+    query = f"""
+    MATCH (u:{NODE_LABEL} {{email: $email}})
     SET u.password = $hashed
     RETURN u
     """
-    with driver.session(database="users") as session:
+    with driver.session() as session:
         result = session.run(query, email=email, hashed=hashed)
         user = result.single()
     if not user:

@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify
 from utils import driver, SECRET_KEY
 import jwt
 
+NODE_LABEL_USER = "notifications_usernode"
+NODE_LABEL_NOTIFICATION = "notifications_notification"
+
 notification_bp = Blueprint("notifications", __name__)
 
 @notification_bp.route("/", methods=["POST"])
@@ -29,20 +32,20 @@ def create_notification():
 
     try:
         def create_notification_tx(tx):
-            tx.run("""
-                MERGE (u:UserNode {email: $receiver})
-                CREATE (n:Notification {
+            tx.run(f"""
+                MERGE (u:{NODE_LABEL_USER} {{email: $receiver}})
+                CREATE (n:{NODE_LABEL_NOTIFICATION} {{
                     message: $message,
                     type: $type,
                     from_email: $from_email,
                     from_username: $from_username,
                     timestamp: datetime()
-                })
+                }})
                 CREATE (u)-[:HAS_NOTIFICATION]->(n)
 
                 // Clean up old notifications after 20
                 WITH u
-                MATCH (u)-[r:HAS_NOTIFICATION]->(old:Notification)
+                MATCH (u)-[r:HAS_NOTIFICATION]->(old:{NODE_LABEL_NOTIFICATION})
                 WITH u, r, old ORDER BY old.timestamp DESC
                 SKIP 20
                 FOREACH (x IN CASE WHEN old IS NULL THEN [] ELSE [1] END | DELETE r, old)
@@ -54,7 +57,7 @@ def create_notification():
                 from_username=sender_username
             )
 
-        with driver.session(database="notifications") as session:
+        with driver.session() as session:
             session.write_transaction(create_notification_tx)
 
         return jsonify({"message": "Notification sent successfully"}), 201
@@ -76,9 +79,9 @@ def get_notifications():
     except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid token"}), 401
 
-    with driver.session(database="notifications") as session:
-        result = session.run("""
-            MATCH (u:UserNode {email: $email})-[:HAS_NOTIFICATION]->(n:Notification)
+    with driver.session() as session:
+        result = session.run(f"""
+            MATCH (u:{NODE_LABEL_USER} {{email: $email}})-[:HAS_NOTIFICATION]->(n:{NODE_LABEL_NOTIFICATION})
             RETURN n.message AS message, 
                    toString(n.timestamp) AS timestamp, 
                    n.type AS type, 
@@ -111,13 +114,13 @@ def mark_notification_handled():
     if not requester_name or not community or decision not in ("accept", "reject"):
         return jsonify({"error": "Missing or invalid data"}), 400
 
-    with driver.session(database="notifications") as session:
+    with driver.session() as session:
         # ✅ Build the new message
         new_msg = f"You {decision}ed a request"
         new_type = "system"
 
-        session.run("""
-            MATCH (u:UserNode {email: $creator_email})-[:HAS_NOTIFICATION]->(n:Notification)
+        session.run(f"""
+            MATCH (u:{NODE_LABEL_USER} {{email: $creator_email}})-[:HAS_NOTIFICATION]->(n:{NODE_LABEL_NOTIFICATION})
             WHERE n.message CONTAINS $community AND n.from_username = $requester_name AND n.type = 'join_request'
             SET n.message = $new_msg
             SET n.type = $new_type
