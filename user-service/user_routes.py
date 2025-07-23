@@ -109,10 +109,7 @@ def signin():
     
 @user_bp.route("/verify-token", methods=["GET"])
 def verify_token_for_home():
-    print("[Debug] /verify-token route hit")
     payload, error_response, status = verify_jwt_token()
-
-    print(f"[Debug] Payload: {payload}, Error: {error_response}, Status: {status}")
 
     if error_response:
         return error_response, status

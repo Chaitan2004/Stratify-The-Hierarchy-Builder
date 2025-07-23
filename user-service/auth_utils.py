@@ -24,18 +24,13 @@ def decode_token(token):
 def verify_jwt_token():
     token = request.cookies.get("token")
 
-    print(f"[Debug] Token from cookie: {token}")
-
     if not token:
         return None, jsonify({"error": "Unauthorized - Token missing"}), 401
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        print(f"[Debug] Token decoded successfully: {payload}")
         return payload, None, 200
     except jwt.ExpiredSignatureError:
-        print("❌ Token expired")
         return None, jsonify({"error": "Token expired"}), 401
-    except jwt.InvalidTokenError as e:
-        print(f"❌ Invalid token: {e}")
+    except jwt.InvalidTokenError:
         return None, jsonify({"error": "Invalid token"}), 401
