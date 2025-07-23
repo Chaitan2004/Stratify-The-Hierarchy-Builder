@@ -19,27 +19,48 @@ function Register() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
-
-    const res = await fetch(`${USER_SERVICE_URL}/api/user/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(formData),
-    });
-
-    const data = await res.json();
-    setLoading(false);
-
-    if (res.ok) {
-      setMessageType("success");
-      setMessage("✅ " + data.message);
-      setFormData({ username: "", email: "", password: "" });
-    }  else {
+  
+    console.log("📤 Submitting form data:", formData);
+  
+    try {
+      const res = await fetch(`${USER_SERVICE_URL}/api/user/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // Needed only if using cookies
+        body: JSON.stringify(formData),
+      });
+  
+      console.log("📥 Raw response:", res);
+  
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error("❌ Failed to parse JSON:", jsonErr);
+        throw new Error("Invalid JSON response from server.");
+      }
+  
+      console.log("📦 Parsed response data:", data);
+      setLoading(false);
+  
+      if (res.ok) {
+        setMessageType("success");
+        setMessage("✅ " + (data.message || "Registration successful"));
+        setFormData({ username: "", email: "", password: "" });
+      } else {
         setMessageType("error");
         setMessage("❌ " + (data.error || "Registration failed. Try again."));
       }
+    } catch (err) {
+      console.error("🚨 Fetch failed:", err);
+      setLoading(false);
+      setMessageType("error");
+      setMessage("❌ Network or server error. Check console.");
+    }
   };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-cyan-100 flex justify-center items-center px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-6">

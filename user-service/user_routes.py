@@ -34,6 +34,9 @@ def register():
     email = data.get("email")
     password = data.get("password")
 
+    print("Register hit:", data)
+
+
     if not username or not email or not password:
         return jsonify({"error": "All fields are required"}), 400
 
