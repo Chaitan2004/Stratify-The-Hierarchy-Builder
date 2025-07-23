@@ -64,17 +64,7 @@ def register():
 
     return jsonify({"message": "Verification email sent!"}), 200
 
-def verify_jwt_token():
-    token = request.cookies.get("token")  # ✅ Get token from cookie
-    if not token:
-        return None, jsonify({"error": "Unauthorized"}), 401
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        return payload, None, None
-    except jwt.ExpiredSignatureError:
-        return None, jsonify({"error": "Token expired"}), 401
-    except jwt.InvalidTokenError:
-        return None, jsonify({"error": "Invalid token"}), 401
+
 
 @user_bp.route("/signin", methods=["POST"])
 def signin():
@@ -116,14 +106,20 @@ def signin():
             return response
 
         return jsonify({"error": "Invalid username/email or password"}), 401
-    
-@user_bp.route("/verify-token", methods=["GET"])
+
 def verify_token_for_home():
+    print("[Debug] /verify-token route hit")
     payload, error_response, status = verify_jwt_token()
+
     if error_response:
+        print(f"[Debug] Verification failed with status {status}")
         return error_response, status
+
     if not payload or "username" not in payload:
+        print("❌ Token payload invalid or missing 'username'")
         return jsonify({"error": "User not found in token"}), 401
+
+    print(f"✅ Token verified. Username: {payload['username']}")
     return jsonify({"username": payload["username"]})
 
 @user_bp.route("/logout", methods=["POST"])
