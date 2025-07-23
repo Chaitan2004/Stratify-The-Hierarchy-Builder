@@ -8,17 +8,25 @@ load_dotenv()
 UPSTASH_REDIS_REST_URL = os.getenv("UPSTASH_REDIS_REST_URL")
 UPSTASH_REDIS_REST_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN")
 
+
 def store_token(token, data, expiry=600):
+    """
+    Store a token and associated data in Upstash Redis via HTTP.
+    :param token: unique token key
+    :param data: dictionary payload
+    :param expiry: expiration time in seconds (default 10 minutes)
+    """
     try:
         url = f"{UPSTASH_REDIS_REST_URL}/set/{token}?EX={expiry}"
         headers = {
             "Authorization": f"Bearer {UPSTASH_REDIS_REST_TOKEN}",
             "Content-Type": "application/json"
         }
-        # Only wrap once: send data as a raw JSON string
-        payload = json.dumps(data)
-        response = requests.post(url, headers=headers, data=payload)
 
+        # Send JSON string as raw string in body
+        payload = json.dumps(json.dumps(data))
+
+        response = requests.post(url, headers=headers, data=payload)
         print(f"[Debug] Storing token: {token} with data: {data}")
         print(f"✅ Token stored via HTTP Redis: {response.json()}")
 
@@ -27,13 +35,17 @@ def store_token(token, data, expiry=600):
 
 
 def verify_token(token):
+    """
+    Retrieve and delete the token from Upstash Redis.
+    :param token: token to verify
+    :return: deserialized data or None
+    """
     try:
         url = f"{UPSTASH_REDIS_REST_URL}/get/{token}"
         headers = {
             "Authorization": f"Bearer {UPSTASH_REDIS_REST_TOKEN}"
         }
 
-        # GET the token
         response = requests.get(url, headers=headers)
         print(f"[Debug] GET {token} -> Status: {response.status_code}, Response: {response.text}")
 
@@ -46,11 +58,12 @@ def verify_token(token):
             print(f"⚠️ Token not found or expired: {token}")
             return None
 
-        # Delete token (one-time use)
+        # One-time use: delete token
         del_url = f"{UPSTASH_REDIS_REST_URL}/del/{token}"
         del_response = requests.post(del_url, headers=headers)
         print(f"[Debug] DEL {token} -> Status: {del_response.status_code}, Response: {del_response.text}")
 
+        # Decode two layers: Redis string of a JSON string
         user = json.loads(raw_data)
         print(f"[Debug] verify_token returned: {user}")
         return user
