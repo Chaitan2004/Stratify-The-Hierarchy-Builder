@@ -113,7 +113,7 @@ def signin():
                 "token",
                 token,
                 httponly=True,
-                secure=False,         # Use HTTPS in production
+                secure=True,         # Use HTTPS in production
                 samesite="Lax",      # Prevent CSRF attacks
                 max_age=7 * 24 * 60 * 60  # 7 days
             )
