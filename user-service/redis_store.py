@@ -19,7 +19,7 @@ def store_token(token, data, expiry=600):
         print("✅ Token stored via HTTP Redis:", response.json())
     except Exception as e:
         print("❌ Redis HTTP store failed:", e)
-
+        
 def verify_token(token):
     try:
         url = f"{UPSTASH_REDIS_REST_URL}/get/{token}"
@@ -35,13 +35,8 @@ def verify_token(token):
             del_url = f"{UPSTASH_REDIS_REST_URL}/del/{token}"
             del_response = requests.post(del_url, headers=headers)
             print(f"[Redis Debug] DEL {token}: {del_response.json()}")
-            # Double-decode: first loads the outer JSON, then the inner string
-            if isinstance(data, dict) and "value" in data:
-                user = json.loads(data["value"])
-            elif isinstance(data, str):
-                user = json.loads(data)
-            else:
-                user = None
+            # The value is always a string, so just decode it once
+            user = json.loads(data)
             return user
         return None
     except Exception as e:
