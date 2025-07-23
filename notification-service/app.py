@@ -9,8 +9,11 @@ load_dotenv()
 app = Flask(__name__)
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
-CORS(app, supports_credentials=True, origins=[FRONTEND_URL])
-
+CORS(app,
+     origins=[FRONTEND_URL],
+     methods=["GET", "POST", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"],
+     supports_credentials=True)
 # ✅ Register Blueprint
 app.register_blueprint(notification_bp, url_prefix="/api/notify")
 

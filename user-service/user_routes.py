@@ -9,6 +9,7 @@ from email_utils import send_reset_email
 import secrets
 from redis_store import verify_token as verify_reset_token
 from dotenv import load_dotenv
+from flask_cors import cross_origin
 import os
 
 load_dotenv()
@@ -28,6 +29,7 @@ driver = GraphDatabase.driver(
 )
 
 @user_bp.route("/register", methods=["POST"])
+@cross_origin(origin=FRONTEND_URL, supports_credentials=True)
 def register():
     data = request.json
     username = data.get("username")
