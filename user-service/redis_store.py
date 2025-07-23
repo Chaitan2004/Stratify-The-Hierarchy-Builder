@@ -12,15 +12,20 @@ def store_token(token, data, expiry=600):
     try:
         url = f"{UPSTASH_REDIS_REST_URL}/set/{token}?EX={expiry}"
         headers = {
-            "Authorization": f"Bearer {UPSTASH_REDIS_REST_TOKEN}"
+            "Authorization": f"Bearer {UPSTASH_REDIS_REST_TOKEN}",
+            "Content-Type": "application/json"
         }
-        response = requests.post(url, headers=headers, json={"value": json.dumps(data)})
+        # Only wrap once: send data as a raw JSON string
+        payload = json.dumps(data)
+        response = requests.post(url, headers=headers, data=payload)
+
         print(f"[Debug] Storing token: {token} with data: {data}")
-        print("✅ Token stored via HTTP Redis:", response.json())
+        print(f"✅ Token stored via HTTP Redis: {response.json()}")
+
     except Exception as e:
-        print("❌ Redis HTTP store failed:", e)
-        
-        
+        print(f"❌ Redis HTTP store_token() failed: {e}")
+
+
 def verify_token(token):
     try:
         url = f"{UPSTASH_REDIS_REST_URL}/get/{token}"
@@ -36,8 +41,8 @@ def verify_token(token):
             print(f"❌ Redis GET failed: {response.text}")
             return None
 
-        data = response.json().get("result")
-        if not data:
+        raw_data = response.json().get("result")
+        if not raw_data:
             print(f"⚠️ Token not found or expired: {token}")
             return None
 
@@ -46,7 +51,9 @@ def verify_token(token):
         del_response = requests.post(del_url, headers=headers)
         print(f"[Debug] DEL {token} -> Status: {del_response.status_code}, Response: {del_response.text}")
 
-        return json.loads(data)  # JSON string → dict
+        user = json.loads(raw_data)
+        print(f"[Debug] verify_token returned: {user}")
+        return user
 
     except Exception as e:
         print(f"❌ Redis verify_token() failed: {e}")
