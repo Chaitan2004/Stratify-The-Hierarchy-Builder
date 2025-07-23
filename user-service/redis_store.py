@@ -23,8 +23,8 @@ def store_token(token, data, expiry=600):
             "Content-Type": "application/json"
         }
 
-        # Send JSON string as raw string in body
-        payload = json.dumps(json.dumps(data))
+        # Encode data once as string — clean payload for Upstash REST API
+        payload = json.dumps({"value": json.dumps(data)})
 
         response = requests.post(url, headers=headers, data=payload)
         print(f"[Debug] Storing token: {token} with data: {data}")
@@ -63,8 +63,8 @@ def verify_token(token):
         del_response = requests.post(del_url, headers=headers)
         print(f"[Debug] DEL {token} -> Status: {del_response.status_code}, Response: {del_response.text}")
 
-        # Decode two layers: Redis string of a JSON string
-        user = json.loads(raw_data)
+        # Decode double-encoded value: string → stringified JSON → dict
+        user = json.loads(json.loads(raw_data))
         print(f"[Debug] verify_token returned: {user}")
         return user
 
