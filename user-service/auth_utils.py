@@ -30,7 +30,7 @@ def verify_jwt_token():
         return None, jsonify({"error": "Unauthorized - Token missing"}), 401
 
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         print(f"[Debug] Token decoded successfully: {payload}")
         return payload, None, 200
     except jwt.ExpiredSignatureError:
