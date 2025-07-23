@@ -122,7 +122,7 @@ def verify_token_for_home():
 @user_bp.route("/logout", methods=["POST"])
 def logout():
     response = make_response(jsonify({"message": "Logged out"}), 200)
-    response.set_cookie("token", "", max_age=0, httponly=True, samesite="Lax")
+    response.set_cookie("token", "", max_age=0, httponly=True, samesite="None")
     return response
 
 @user_bp.route("/update-username", methods=["POST"])
