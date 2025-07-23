@@ -299,10 +299,12 @@ def reset_password():
     data = request.json
     token = data.get('token')
     new_password = data.get('password')
+    print(f"[Debug] Reset password called with token: {token}, new_password: {new_password}", flush=True)
     if not token or not new_password:
         return jsonify({'error': 'Token and new password are required'}), 400
     # Validate token
     token_data = verify_reset_token(token)
+    print(f"[Debug] verify_reset_token returned: {token_data}", flush=True)
     if not token_data or 'email' not in token_data:
         return jsonify({'error': 'Invalid or expired token'}), 400
     email = token_data['email']
