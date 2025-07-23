@@ -106,7 +106,8 @@ def signin():
             return response
 
         return jsonify({"error": "Invalid username/email or password"}), 401
-
+    
+@user_bp.route("/verify-token", methods=["GET"])
 def verify_token_for_home():
     print("[Debug] /verify-token route hit")
     payload, error_response, status = verify_jwt_token()
