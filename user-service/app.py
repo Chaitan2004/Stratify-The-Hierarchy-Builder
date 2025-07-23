@@ -14,4 +14,5 @@ CORS(app, origins=[FRONTEND_URL], supports_credentials=True)
 app.register_blueprint(user_bp, url_prefix="/api/user")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port)

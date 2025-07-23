@@ -15,4 +15,5 @@ CORS(app, supports_credentials=True, origins=[FRONTEND_URL])
 app.register_blueprint(notification_bp, url_prefix="/api/notify")
 
 if __name__ == "__main__":
-    app.run(port=5003, debug=True)
+    port = int(os.environ.get("PORT", 5003))
+    app.run(host="0.0.0.0", port=port)
