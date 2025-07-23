@@ -112,15 +112,14 @@ def verify_token_for_home():
     print("[Debug] /verify-token route hit")
     payload, error_response, status = verify_jwt_token()
 
+    print(f"[Debug] Payload: {payload}, Error: {error_response}, Status: {status}")
+
     if error_response:
-        print(f"[Debug] Verification failed with status {status}")
         return error_response, status
 
     if not payload or "username" not in payload:
-        print("❌ Token payload invalid or missing 'username'")
         return jsonify({"error": "User not found in token"}), 401
 
-    print(f"✅ Token verified. Username: {payload['username']}")
     return jsonify({"username": payload["username"]})
 
 @user_bp.route("/logout", methods=["POST"])
