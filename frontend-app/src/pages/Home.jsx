@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../components/AuthContext";
 
+const COMMUNITY_SERVICE_URL = import.meta.env.VITE_COMMUNITY_SERVICE;
+
 function UserDetails() {
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(true);
@@ -14,7 +16,7 @@ function UserDetails() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("http://localhost:5002/api/community/user-details", {
+        const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/user-details`, {
           method: "GET",
           credentials: "include",
         });
@@ -55,7 +57,7 @@ function UserDetails() {
     }
 
     try {
-      const res = await fetch("http://localhost:5002/api/community/update-user", {
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/update-user`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

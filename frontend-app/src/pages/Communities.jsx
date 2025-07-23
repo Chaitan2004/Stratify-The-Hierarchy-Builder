@@ -4,6 +4,9 @@ import toast from "react-hot-toast";
 import CommunityRender from "../components/communityRender";
 import { Trash2 } from 'lucide-react';
 
+const COMMUNITY_SERVICE_URL = import.meta.env.VITE_COMMUNITY_SERVICE;
+const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE;
+
 function Communities() {
   const [communities, setCommunities] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -21,7 +24,7 @@ function Communities() {
   const confirmDeleteCommunity = async () => {
     if (!deleteCommunity.name) return;
     try {
-      const res = await fetch("http://localhost:5002/api/community/delete-community", {
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/delete-community`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ community: deleteCommunity.name }),
@@ -42,7 +45,7 @@ function Communities() {
 
   useEffect(() => {
     setLoading(true);
-    fetch("http://localhost:5002/api/community/my-communities", {
+    fetch(`${COMMUNITY_SERVICE_URL}/api/community/my-communities`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -66,7 +69,7 @@ function Communities() {
     if (selected !== null && communities[selected]) {
       setLeaderLoading(true);
       setLeaderNode(null);
-      fetch(`http://localhost:5002/api/community/leader-node-and-tree?community=${encodeURIComponent(communities[selected].name)}`)
+      fetch(`${COMMUNITY_SERVICE_URL}/api/community/leader-node-and-tree?community=${encodeURIComponent(communities[selected].name)}`)
         .then(res => res.json())
         .then(data => {
           if (data && !data.error) {
@@ -88,7 +91,7 @@ function Communities() {
 
   // Fetch current user's username
   useEffect(() => {
-    fetch("http://localhost:5001/api/verify-token", {
+    fetch(`${USER_SERVICE_URL}/api/user/verify-token`, {
       method: "GET",
       credentials: "include",
     })

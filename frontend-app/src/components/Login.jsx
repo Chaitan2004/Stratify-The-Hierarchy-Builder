@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
+const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE;
+
 function Login() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -19,7 +21,7 @@ function Login() {
     setMessage("");
 
     try {
-      const response = await fetch("http://localhost:5001/api/signin", {
+      const response = await fetch(`${USER_SERVICE_URL}/api/user/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password }),

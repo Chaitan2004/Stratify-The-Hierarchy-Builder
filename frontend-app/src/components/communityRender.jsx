@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { UserPlus, UserMinus, ArrowRight, Hand, ZoomIn, ZoomOut, Crosshair, Trash2, Users } from 'lucide-react';
 import toast from "react-hot-toast";
 
+const COMMUNITY_SERVICE_URL = import.meta.env.VITE_COMMUNITY_SERVICE;
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND;
+
 const BASE_NODE_RADIUS = 30;
 const BASE_LEADER_RADIUS = 45;
 const CHAR_WIDTH = 10; // Approximate width per character for sizing
@@ -223,7 +226,7 @@ export default function CommunityRender({ leaderNode, communityName, currentUser
     try {
       const fromUsername = arrowConfirm.from.username;
       const toUsername = arrowConfirm.to.username;
-      const res = await fetch("http://localhost:5002/api/community/create-child-of", {
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/create-child-of`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -249,7 +252,7 @@ export default function CommunityRender({ leaderNode, communityName, currentUser
   const confirmRemoveNode = async () => {
     // Query backend to delete CHILD_OF relationships from or to this node
     try {
-      const res = await fetch("http://localhost:5002/api/community/delete-user-node", {
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/delete-user-node`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -277,7 +280,7 @@ export default function CommunityRender({ leaderNode, communityName, currentUser
   const handleNodeClick = async (node) => {
     setProfileModal({ open: true, loading: true, error: null, data: null });
     try {
-      const res = await fetch(`http://localhost:5002/api/community/get-user-details?username=${encodeURIComponent(node.username)}`);
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/get-user-details?username=${encodeURIComponent(node.username)}`);
       if (res.ok) {
         const data = await res.json();
         setProfileModal({ open: true, loading: false, error: null, data });
@@ -311,7 +314,7 @@ export default function CommunityRender({ leaderNode, communityName, currentUser
     const node = deleteNodeConfirm.node;
     if (!node) return;
     try {
-      const res = await fetch("http://localhost:5002/api/community/delete-user-node", {
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/delete-user-node`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -338,7 +341,7 @@ export default function CommunityRender({ leaderNode, communityName, currentUser
     setShowMembers(true);
     setMembersData({ loading: true, error: null, leader: null, members: [] });
     try {
-      const res = await fetch(`http://localhost:5002/api/community/members?community=${encodeURIComponent(communityName)}`, { credentials: "include" });
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/members?community=${encodeURIComponent(communityName)}`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setMembersData({ loading: false, error: null, leader: data.leader, members: data.members });
@@ -359,14 +362,14 @@ export default function CommunityRender({ leaderNode, communityName, currentUser
     if (!member) return;
     try {
       // Remove MEMBER_OF relationship
-      const res1 = await fetch("http://localhost:5002/api/community/remove-member", {
+      const res1 = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/remove-member`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ community: communityName, username: member.username }),
         credentials: "include"
       });
       // Remove CHILD_OF relationships from or to this node in the tree
-      const res2 = await fetch("http://localhost:5002/api/community/delete-user-node", {
+      const res2 = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/delete-user-node`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ community: communityName, username: member.username }),

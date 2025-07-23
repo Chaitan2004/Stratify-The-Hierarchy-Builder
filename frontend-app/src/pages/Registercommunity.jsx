@@ -3,6 +3,8 @@ import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import { Users } from "lucide-react";
 
+const COMMUNITY_SERVICE_URL = import.meta.env.VITE_COMMUNITY_SERVICE;
+
 function Registercommunity() {
   const [community, setCommunity] = useState({ name: "", level: "", motto: "" });
   const [loading, setLoading] = useState(false);
@@ -14,11 +16,11 @@ function Registercommunity() {
   const getCommunitySizeInfo = (level) => {
     switch (level) {
       case "1":
-        return "👥 Max size: 10 members";
+        return "👥 Max size: 10 members (under development max size is unlimited)";
       case "2":
-        return "👥 Max size: 20 members";
+        return "👥 Max size: 20 members (under development max size is unlimited)";
       case "3":
-        return "👥 Max size: 30 members";
+        return "👥 Max size: 30 members (under development max size is unlimited)";
       case "4":
         return "👥 Max size: Unlimited members";
       default:
@@ -30,7 +32,7 @@ function Registercommunity() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5002/api/community/register", {
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

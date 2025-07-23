@@ -1,25 +1,31 @@
 import smtplib
 from email.message import EmailMessage
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USER)
+FROM_NAME = os.getenv("FROM_NAME", "Stratify")
+BACKEND_URL = os.getenv("USER_URL")
 
 def send_verification_email(to_email, token):
     msg = EmailMessage()
-    
-    # ✅ Set proper subject
     msg["Subject"] = "Welcome to Stratify! Please Verify Your Email"
-    
-    # ✅ Set From name as "Stratify" (not just the Gmail address)
-    msg["From"] = "Stratify"  
-    
+    msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
     msg["To"] = to_email
 
-    # ✅ Plain-text body (simple version)
     body = f"""
 Hi there,
 
 Thanks for signing up for Stratify! 🚀
 
 Please verify your email by clicking the link below:
-👉 http://localhost:5001/api/verify/{token}
+👉 {BACKEND_URL}/api/verify/{token}
 
 If you didn't request this, you can safely ignore this message.
 
@@ -28,16 +34,15 @@ The Stratify Team
 """
     msg.set_content(body)
 
-    # ✅ Send email via Gmail SMTP
-    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
         smtp.starttls()
-        smtp.login("srichaitan26@gmail.com", "enmb lrjd xoxf hryi")  # App password
+        smtp.login(SMTP_USER, SMTP_PASSWORD)
         smtp.send_message(msg)
 
 def send_reset_email(to_email, reset_link):
     msg = EmailMessage()
     msg["Subject"] = "Stratify Password Reset"
-    msg["From"] = "Stratify"
+    msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
     msg["To"] = to_email
     body = f"""
 Hi there,
@@ -53,7 +58,7 @@ Thanks,
 The Stratify Team
 """
     msg.set_content(body)
-    with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
+    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
         smtp.starttls()
-        smtp.login("srichaitan26@gmail.com", "enmb lrjd xoxf hryi")  # App password
+        smtp.login(SMTP_USER, SMTP_PASSWORD)
         smtp.send_message(msg)

@@ -3,13 +3,23 @@ from neo4j import GraphDatabase
 import os
 import jwt
 import requests
+from dotenv import load_dotenv
 
+load_dotenv()
+
+NOTIFY_URL = os.getenv("NOTIFY_URL")
+COMMUNITY_URL = os.getenv("COMMUNITY_URL")
+USER_URL = os.getenv("USER_URL")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 community_bp = Blueprint("community", __name__)
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "chaitan26"))
+driver = GraphDatabase.driver(
+    os.getenv("NEO4J_URI"),
+    auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
+)
 # 🔍 Get user details
 @community_bp.route("/user-details", methods=["GET"])
 def get_user_details():
@@ -243,7 +253,7 @@ def request_join():
 
         # Step 4: Notify the creator
         message = f"{full_name} requested to join your community '{community_name}'"
-        response = requests.post("http://localhost:5003/api/notify", json={
+        response = requests.post(NOTIFY_URL + "/api/notify", json={
             "to": creator_email,
             "message": message,
             "type": "join_request"
@@ -321,7 +331,7 @@ def handle_join_response():
     message = f"Your request to join '{community}' was {'accepted' if decision == 'accept' else 'rejected'}"
     try:
         requests.post(
-            "http://localhost:5003/api/notify",
+            NOTIFY_URL + "/api/notify",
             json={
                 "to": requester_email,
                 "message": message,
@@ -334,7 +344,7 @@ def handle_join_response():
 
     try:
         requests.post(
-            "http://localhost:5003/api/notify/mark-handled",
+            NOTIFY_URL + "/api/notify/mark-handled",
             json={
                 "requester": requester,
                 "community": community,

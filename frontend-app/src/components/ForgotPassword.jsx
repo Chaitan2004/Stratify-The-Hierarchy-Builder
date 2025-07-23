@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE;
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -10,7 +12,7 @@ export default function ForgotPassword() {
     setLoading(true);
     setMessage("");
     try {
-      const res = await fetch("http://localhost:5001/api/forgot-password", {
+      const res = await fetch(`${USER_SERVICE_URL}/api/user/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

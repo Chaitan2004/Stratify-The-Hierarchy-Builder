@@ -3,6 +3,8 @@ import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import { Search, Info, UserPlus } from "lucide-react";
 
+const COMMUNITY_SERVICE_URL = import.meta.env.VITE_COMMUNITY_SERVICE;
+
 function SearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -14,7 +16,7 @@ function SearchPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `http://localhost:5002/api/community/search?q=${encodeURIComponent(query)}`,
+        `${COMMUNITY_SERVICE_URL}/api/community/search?q=${encodeURIComponent(query)}`,
         {
           credentials: "include",
         }
@@ -34,7 +36,7 @@ function SearchPage() {
 
   const handleJoin = async (communityName) => {
     try {
-      const res = await fetch("http://localhost:5002/api/community/join", {
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

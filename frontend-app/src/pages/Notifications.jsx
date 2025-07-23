@@ -3,11 +3,14 @@ import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import { Check, X } from "lucide-react"; // ✅ Lucide icons
 
+const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE;
+const COMMUNITY_SERVICE_URL = import.meta.env.VITE_COMMUNITY_SERVICE;
+
 function Notifications() {
   const [notifs, setNotifs] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5003/api/notify/fetch", {
+    fetch(`${NOTIFICATION_SERVICE_URL}/api/notify/fetch`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -45,7 +48,7 @@ function Notifications() {
     }
 
     try {
-      const res = await fetch("http://localhost:5002/api/community/join-response", {
+      const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/join-response`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

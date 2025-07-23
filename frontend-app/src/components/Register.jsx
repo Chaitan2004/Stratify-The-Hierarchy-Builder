@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE;
+
 function Register() {
   const [formData, setFormData] = useState({ username: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -18,7 +20,7 @@ function Register() {
     setLoading(true);
     setMessage(null);
 
-    const res = await fetch("http://localhost:5001/api/register", {
+    const res = await fetch(`${USER_SERVICE_URL}/api/user/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),

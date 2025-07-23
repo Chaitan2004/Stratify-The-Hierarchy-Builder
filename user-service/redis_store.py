@@ -1,7 +1,11 @@
 import redis
 import json
+from dotenv import load_dotenv
+import os
 
-r = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
+load_dotenv()
+
+r = redis.Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"), db=os.getenv("REDIS_DB"), decode_responses=True)
 
 def store_token(token, data, expiry=600):  # 10 mins expiry
     r.set(token, json.dumps(data))

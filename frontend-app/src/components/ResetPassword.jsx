@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
+const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE;
+
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
@@ -27,7 +29,7 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5001/api/reset-password", {
+      const res = await fetch(`${USER_SERVICE_URL}/api/user/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password }),

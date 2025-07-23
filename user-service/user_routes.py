@@ -8,12 +8,23 @@ from redis_store import store_token as store_reset_token
 from email_utils import send_reset_email
 import secrets
 from redis_store import verify_token as verify_reset_token
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+COMMUNITY_URL = os.getenv("COMMUNITY_URL")
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 
 user_bp = Blueprint("user", __name__)
 
 from neo4j import GraphDatabase
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "chaitan26"))
+
+driver = GraphDatabase.driver(
+    os.getenv("NEO4J_URI"),
+    auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
+)
 
 @user_bp.route("/register", methods=["POST"])
 def register():
@@ -119,7 +130,7 @@ def logout():
     response.set_cookie("token", "", max_age=0, httponly=True, samesite="Lax")
     return response
 
-@user_bp.route("/user/update-username", methods=["POST"])
+@user_bp.route("/update-username", methods=["POST"])
 def update_username():
     payload, error_response, status = verify_jwt_token()
     if error_response:
@@ -156,7 +167,7 @@ def update_username():
     # Notify community-service of username change
     import requests
     try:
-        community_service_url = "http://localhost:5002/api/community/user/update-username"  # Adjust port if needed
+        community_service_url = COMMUNITY_URL + "/api/community/user/update-username"
         resp = requests.post(
             community_service_url,
             json={"email": user_email, "new_username": new_username},
@@ -180,7 +191,7 @@ def update_username():
     )
     return response
 
-@user_bp.route("/user/update-password", methods=["POST"])
+@user_bp.route("/update-password", methods=["POST"])
 def update_password():
     payload, error_response, status = verify_jwt_token()
     if error_response:
@@ -226,7 +237,7 @@ def update_password():
     )
     return response
 
-@user_bp.route("/user/me", methods=["GET"])
+@user_bp.route("/me", methods=["GET"])
 def get_user_info():
     payload, error_response, status = verify_jwt_token()
     if error_response:
@@ -271,7 +282,7 @@ def forgot_password():
     # Store token in Redis with 1 hour expiry
     store_reset_token(token, {'email': email}, expiry=3600)
     # Send reset email
-    reset_link = f"http://localhost:5174/reset-password?token={token}"
+    reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
     send_reset_email(email, reset_link)
     print(f"[Password Reset] Sent to {email}: {reset_link}")
     return jsonify({'message': 'If an account exists, a reset link has been sent to your email.'}), 200

@@ -1,12 +1,17 @@
 from flask import Flask
 from flask_cors import CORS  
 from user_routes import user_bp 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)  
 
-CORS(app, origins=["http://localhost:5174"], supports_credentials=True)
+FRONTEND_URL = os.getenv("FRONTEND_URL")
+CORS(app, origins=[FRONTEND_URL], supports_credentials=True)
 
-app.register_blueprint(user_bp, url_prefix="/api")
+app.register_blueprint(user_bp, url_prefix="/api/user")
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

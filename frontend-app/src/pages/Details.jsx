@@ -3,6 +3,8 @@ import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 
+const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE;
+
 function Details() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -12,7 +14,7 @@ function Details() {
 
   // Fetch user info on load
   useEffect(() => {
-    fetch("http://localhost:5001/api/user/me", {
+    fetch(`${USER_SERVICE_URL}/api/user/me`, {
       credentials: "include",
     })
       .then((res) => {
@@ -34,7 +36,7 @@ function Details() {
     }
 
     try {
-      const res = await fetch("http://localhost:5001/api/user/update-username", {
+      const res = await fetch(`${USER_SERVICE_URL}/api/user/update-username`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -65,7 +67,7 @@ function Details() {
     }
 
     try {
-      const res = await fetch("http://localhost:5001/api/user/update-password", {
+      const res = await fetch(`${USER_SERVICE_URL}/api/user/update-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

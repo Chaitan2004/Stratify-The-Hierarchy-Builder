@@ -14,6 +14,9 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
+const USER_SERVICE_URL = import.meta.env.VITE_USER_SERVICE;
+const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE;
+
 function Navbar() {
   const [username, setUsername] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -25,7 +28,7 @@ function Navbar() {
   useEffect(() => {
     const fetchUsername = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/verify-token", {
+        const res = await fetch(`${USER_SERVICE_URL}/api/user/verify-token`, {
           method: "GET",
           credentials: "include",
         });
@@ -44,7 +47,7 @@ function Navbar() {
 
   useEffect(() => {
     // Fetch notifications and count non-system ones
-    fetch("http://localhost:5003/api/notify/fetch", {
+    fetch(`${NOTIFICATION_SERVICE_URL}/api/notify/fetch`, {
       credentials: "include",
     })
       .then((res) => res.json())
@@ -69,7 +72,7 @@ function Navbar() {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("http://localhost:5001/api/logout", {
+      const res = await fetch(`${USER_SERVICE_URL}/api/user/logout`, {
         method: "POST",
         credentials: "include",
       });

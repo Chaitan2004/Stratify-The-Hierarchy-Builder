@@ -7,10 +7,12 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const location = useLocation();
 
+  const userServiceUrl = import.meta.env.VITE_USER_SERVICE;
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("http://localhost:5001/api/verify-token", {
+        const res = await fetch(`${userServiceUrl}/api/user/verify-token`, {
           credentials: "include",
         });
         setIsAuthenticated(res.ok);
@@ -19,7 +21,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
     checkAuth();
-  }, [location]); // re-run on every route change
+  }, [location, userServiceUrl]); // re-run on every route change
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
