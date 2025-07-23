@@ -9,8 +9,12 @@ load_dotenv()
 app = Flask(__name__)  
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
-CORS(app, origins=[FRONTEND_URL], supports_credentials=True)
-
+CORS(app, 
+     resources={r"/api/*": {"origins": FRONTEND_URL}},
+     allow_headers=["Content-Type", "Authorization"],
+     expose_headers=["Content-Type", "Authorization"],
+     supports_credentials=True)
+     
 app.register_blueprint(user_bp, url_prefix="/api/user")
 
 if __name__ == "__main__":
