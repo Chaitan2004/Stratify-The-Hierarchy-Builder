@@ -64,22 +64,17 @@ def register():
 
     return jsonify({"message": "Verification email sent!"}), 200
 
-
-@user_bp.route("/verify/<token>", methods=["GET"])
-def verify(token):
-    print(f"[Debug] /verify called with token: {token}", flush=True)
-    user = verify_token(token)
-    print(f"[Debug] verify_token returned: {user}", flush=True)
-    if user and 'username' in user and 'email' in user and 'password' in user:
-        with driver.session() as session:
-            session.run(f"""
-                MERGE (u:{NODE_LABEL} {{username: $username}})
-                SET u.email = $email, u.password = $password
-            """, username=user['username'], email=user['email'], password=user['password'])
-        return "✅ Your email has been verified and your account is now registered! You can now sign in using the credentials you provided."
-    else:
-        print(f"[Debug] Missing keys in user: {user}", flush=True)
-        return "❌ Invalid or expired token"
+def verify_jwt_token():
+    token = request.cookies.get("token")  # ✅ Get token from cookie
+    if not token:
+        return None, jsonify({"error": "Unauthorized"}), 401
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload, None, None
+    except jwt.ExpiredSignatureError:
+        return None, jsonify({"error": "Token expired"}), 401
+    except jwt.InvalidTokenError:
+        return None, jsonify({"error": "Invalid token"}), 401
 
 @user_bp.route("/signin", methods=["POST"])
 def signin():
