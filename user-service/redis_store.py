@@ -33,7 +33,6 @@ def store_token(token, data, expiry=600):
     except Exception as e:
         print(f"❌ Redis HTTP store_token() failed: {e}")
 
-
 def verify_token(token):
     """
     Retrieve and delete the token from Upstash Redis.
@@ -63,8 +62,11 @@ def verify_token(token):
         del_response = requests.post(del_url, headers=headers)
         print(f"[Debug] DEL {token} -> Status: {del_response.status_code}, Response: {del_response.text}")
 
-        # Decode double-encoded value: string → stringified JSON → dict
-        user = json.loads(json.loads(raw_data))
+        # Now decode two layers:
+        user = json.loads(raw_data)               # 1st decode: {"value": "{...}"}
+        if isinstance(user, dict) and "value" in user:
+            user = json.loads(user["value"])      # 2nd decode: actual user dict
+
         print(f"[Debug] verify_token returned: {user}")
         return user
 
