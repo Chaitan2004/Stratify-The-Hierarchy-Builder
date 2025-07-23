@@ -36,7 +36,6 @@ def register():
 
     print("Register hit:", data)
 
-
     if not username or not email or not password:
         return jsonify({"error": "All fields are required"}), 400
 
@@ -55,6 +54,7 @@ def register():
     # Continue registration
     token = str(uuid.uuid4())  # generate random token
     hashed_password = bcrypt.hash(password)
+    print(f"[Debug] Storing token: {token} with data: {{'username': {username}, 'email': {email}, 'password': {hashed_password}}}", flush=True)
     store_token(token, {
         "username": username,
         "email": email,
@@ -70,7 +70,7 @@ def verify(token):
     print(f"[Debug] /verify called with token: {token}", flush=True)
     user = verify_token(token)
     print(f"[Debug] verify_token returned: {user}", flush=True)
-    if user:
+    if user and 'username' in user and 'email' in user and 'password' in user:
         with driver.session() as session:
             session.run(f"""
                 MERGE (u:{NODE_LABEL} {{username: $username}})
@@ -78,6 +78,7 @@ def verify(token):
             """, username=user['username'], email=user['email'], password=user['password'])
         return "✅ Your email has been verified and your account is now registered! You can now sign in using the credentials you provided."
     else:
+        print(f"[Debug] Missing keys in user: {user}", flush=True)
         return "❌ Invalid or expired token"
 
 @user_bp.route("/signin", methods=["POST"])
