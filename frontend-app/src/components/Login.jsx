@@ -24,14 +24,14 @@ function Login() {
       const response = await fetch(`${USER_SERVICE_URL}/api/user/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
-        credentials: "include"
+        body: JSON.stringify({ identifier, password })
       });
 
       const data = await response.json();
       setLoading(false);
 
       if (response.ok) {
+        localStorage.setItem("token", data.token);
         setMessage("✅ Login successful!");
         setIsAuthenticated(true);
         setTimeout(() => {

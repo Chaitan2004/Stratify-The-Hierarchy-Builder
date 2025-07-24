@@ -22,11 +22,10 @@ def decode_token(token):
         return None
 
 def verify_jwt_token():
-    token = request.cookies.get("token")
-
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return None, jsonify({"error": "Unauthorized - Token missing"}), 401
-
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         return payload, None, 200
