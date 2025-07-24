@@ -341,16 +341,16 @@ def handle_join_response():
         if decision == "accept":
             session.run(f"""
                 MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $community}})
-                MATCH (r:{NODE_LABEL_USER} {{username: $requester}})-[req:REQUESTED]->(c)
+                MATCH (r:{NODE_LABEL_USER} {{email: $requester_email}})-[req:REQUESTED]->(c)
                 DELETE req
                 MERGE (r)-[:MEMBER_OF]->(c)
-            """, community=community, requester=requester)
+            """, community=community, requester_email=requester_email)
         else:
             session.run(f"""
                 MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $community}})
-                MATCH (r:{NODE_LABEL_USER} {{username: $requester}})-[req:REQUESTED]->(c)
+                MATCH (r:{NODE_LABEL_USER} {{email: $requester_email}})-[req:REQUESTED]->(c)
                 DELETE req
-            """, community=community, requester=requester)
+            """, community=community, requester_email=requester_email)
 
     # ✅ Send final notification to the requester
     message = f"Your request to join '{community}' was {'accepted' if decision == 'accept' else 'rejected'}"
