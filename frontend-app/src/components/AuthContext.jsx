@@ -12,8 +12,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        const token = localStorage.getItem("token");
         const res = await fetch(`${userServiceUrl}/api/user/verify-token`, {
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
         setIsAuthenticated(res.ok);
       } catch {
