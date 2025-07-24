@@ -236,7 +236,7 @@ def request_join():
             result = session.run(f"""
                 MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $name}})<-[:CREATED]-(creator:{NODE_LABEL_USER})
                 OPTIONAL MATCH (u:{NODE_LABEL_USER} {{email: $email}})-[:REQUESTED]->(c)
-                OPTIONAL MATCH (u)-[:MEMBER_OF]->(c)
+                OPTIONAL MATCH (u)-[m:MEMBER_OF]->(c)
                 RETURN 
                     creator.email AS creator_email,
                     u IS NOT NULL AND EXISTS((u)-[:REQUESTED]->(c)) AS already_requested,
