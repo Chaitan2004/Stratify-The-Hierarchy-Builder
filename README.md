@@ -15,6 +15,9 @@ A modern, microservices-based community application built with React, Flask, and
   - View your communities, see community trees (leader + `CHILD_OF` relationships)
   - Display all community members, delete communities (leader only)
   - Remove members or user nodes from the tree (leader or self)
+  - Register new communities
+  - Construct and visualize hierarchical community trees
+  - View detailed information about other members in the community
 - **Notifications**
   - Real-time join requests and system notifications
 - **UI/UX**
@@ -164,64 +167,3 @@ All API requests require a JWT in the `Authorization` header:
 ```http
 Authorization: Bearer <token>
 ```
-
-No cookies are used for authentication.
-
----
-
-## Example: Making an Authenticated Request
-
-**JavaScript (fetch):**
-```js
-const token = localStorage.getItem("token");
-const res = await fetch("http://localhost:5001/api/community/my-communities", {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  },
-});
-```
-
-**Python (requests):**
-```python
-import requests
-
-headers = {"Authorization": f"Bearer {token}"}
-response = requests.get("http://localhost:5001/api/community/my-communities", headers=headers)
-```
-
----
-
-## Deployment
-
-- **Docker:** Each service can be containerized for deployment on Render or other platforms.
-- **Render:** Set environment variables in the Render dashboard for each service.
-
----
-
-## Development Notes
-
-- CORS is enabled for all services and supports the `Authorization` header.
-- All services handle `OPTIONS` requests for CORS preflight.
-- All inter-service requests use Bearer tokens in the header.
-
----
-
-## License
-
-MIT
-
----
-
-## Credits
-
-- [Neo4j](https://neo4j.com/)
-- [Upstash Redis](https://upstash.com/)
-- [CopilotKit](https://copilotkit.ai/)
-- [Render](https://render.com/)
-- [React](https://react.dev/)
-- [Flask](https://flask.palletsprojects.com/)
-
----
-
-If you have any questions or need help, please open an issue or contact the maintainer.
-
