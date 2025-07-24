@@ -391,6 +391,7 @@ def handle_join_response():
 
 @community_bp.route("/my-communities", methods=["GET", "OPTIONS"])
 def get_my_communities():
+    print("⚠️ join-response route hit", flush=True)  # <- Add this at the very top
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
 
