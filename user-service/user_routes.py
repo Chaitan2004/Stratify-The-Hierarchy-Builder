@@ -88,22 +88,11 @@ def signin():
         if user and bcrypt.verify(password, user["password"]):
             token = generate_token(user["username"],user["email"])
 
-            response = make_response(jsonify({
+            return jsonify({
                 "message": "Login successful",
-                "username": user["username"]
-            }))
-
-            # Secure cookie setup
-            response.set_cookie(
-                "token",
-                token,
-                httponly=True,
-                secure=True,         # Use HTTPS in production
-                samesite="None",      # Prevent CSRF attacks
-                max_age=7 * 24 * 60 * 60  # 7 days
-            )
-
-            return response
+                "username": user["username"],
+                "token": token
+            })
 
         return jsonify({"error": "Invalid username/email or password"}), 401
     
@@ -121,23 +110,19 @@ def verify_token_for_home():
 
 @user_bp.route("/logout", methods=["POST"])
 def logout():
-    response = make_response(jsonify({"message": "Logged out"}), 200)
-    response.set_cookie(
-        "token", 
-        "", 
-        max_age=0, 
-        httponly=True, 
-        secure=True,         # ✅ Required to match original cookie
-        samesite="None",     # ✅ Must match exactly
-        path="/"             # ✅ Must match the original Path
-    )
-    return response
+    return jsonify({"message": "Logged out"}), 200
 
 @user_bp.route("/update-username", methods=["POST"])
 def update_username():
-    payload, error_response, status = verify_jwt_token()
-    if error_response:
-        return error_response, status
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Unauthorized"}), 401
+    token = auth_header.split(" ")[1]
+    from auth_utils import jwt, SECRET_KEY
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except Exception:
+        return jsonify({"error": "Invalid token"}), 401
     data = request.json
     new_username = data.get("username")
     if not new_username:
@@ -179,26 +164,23 @@ def update_username():
         print(f"Community-service response: {resp.status_code} {resp.text}")
     except Exception as e:
         print(f"Failed to update username in community-service: {e}")
-    # Delete the existing token and instruct client to redirect to login
-    response = make_response(jsonify({
+    return jsonify({
         "message": "Username updated. Please log in again.",
         "redirect": True,
         "redirect_url": "/signin"
-    }), 200)
-    response.set_cookie(
-        "token",
-        "",
-        max_age=0,
-        httponly=True,
-        samesite="Lax"
-    )
-    return response
+    }), 200
 
 @user_bp.route("/update-password", methods=["POST"])
 def update_password():
-    payload, error_response, status = verify_jwt_token()
-    if error_response:
-        return error_response, status
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Unauthorized"}), 401
+    token = auth_header.split(" ")[1]
+    from auth_utils import jwt, SECRET_KEY
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except Exception:
+        return jsonify({"error": "Invalid token"}), 401
     data = request.json
     current_password = data.get("current")
     new_password = data.get("new")
@@ -225,26 +207,23 @@ def update_password():
         RETURN u
         """
         session.run(update_query, username=username, hashed_new=hashed_new)
-    # Delete the existing token and instruct client to redirect to login
-    response = make_response(jsonify({
+    return jsonify({
         "message": "Password updated. Please log in again.",
         "redirect": True,
         "redirect_url": "/signin"
-    }), 200)
-    response.set_cookie(
-        "token",
-        "",
-        max_age=0,
-        httponly=True,
-        samesite="Lax"
-    )
-    return response
+    }), 200
 
 @user_bp.route("/me", methods=["GET"])
 def get_user_info():
-    payload, error_response, status = verify_jwt_token()
-    if error_response:
-        return error_response, status
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Unauthorized"}), 401
+    token = auth_header.split(" ")[1]
+    from auth_utils import jwt, SECRET_KEY
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except Exception:
+        return jsonify({"error": "Invalid token"}), 401
     username = payload.get("username") if payload else None
     if not username:
         return jsonify({"error": "User not found in token"}), 401
