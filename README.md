@@ -4,6 +4,15 @@ A modern, microservices-based community application built with React, Flask, and
 
 ---
 
+---
+
+## Important Note About Server Stability
+
+- The backend servers are not always stable and may occasionally return server errors, especially if you access the web app from the Vercel domain.
+- If you encounter a server error, simply retry your action. This is a known issue due to the current hosting setup.
+
+---
+
 ## Features
 
 - **User Management**
@@ -168,11 +177,3 @@ All API requests require a JWT in the `Authorization` header:
 Authorization: Bearer <token>
 ```
 
----
-
-## Important Note About Server Stability
-
-- The backend servers are not always stable and may occasionally return server errors, especially if you access the web app from the Vercel domain.
-- If you encounter a server error, simply retry your action. This is a known issue due to the current hosting setup.
-
----
