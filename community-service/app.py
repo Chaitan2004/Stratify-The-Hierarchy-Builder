@@ -16,8 +16,7 @@ app.register_blueprint(community_bp, url_prefix="/api/community")
 CORS(app,
      origins=[FRONTEND_URL],
      methods=["GET", "POST", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization"],
-     supports_credentials=True)
+     allow_headers=["Content-Type", "Authorization"])
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5002))

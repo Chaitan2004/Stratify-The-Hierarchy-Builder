@@ -17,6 +17,7 @@ function UserDetails() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
+        console.log("Token before request:", token);
         const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/user-details`, {
           method: "GET",
           headers: {
