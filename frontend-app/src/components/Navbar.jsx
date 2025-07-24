@@ -28,9 +28,12 @@ function Navbar() {
   useEffect(() => {
     const fetchUsername = async () => {
       try {
+        const token = localStorage.getItem("token");
         const res = await fetch(`${USER_SERVICE_URL}/api/user/verify-token`, {
           method: "GET",
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
         const data = await res.json();
         if (res.ok) {
@@ -47,8 +50,11 @@ function Navbar() {
 
   useEffect(() => {
     // Fetch notifications and count non-system ones
+    const token = localStorage.getItem("token");
     fetch(`${NOTIFICATION_SERVICE_URL}/api/notify/fetch`, {
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => res.json())
       .then((data) => {
@@ -73,8 +79,7 @@ function Navbar() {
   const handleLogout = async () => {
     try {
       const res = await fetch(`${USER_SERVICE_URL}/api/user/logout`, {
-        method: "POST",
-        credentials: "include",
+        method: "POST"
       });
       const data = await res.json();
       if (res.ok) {
