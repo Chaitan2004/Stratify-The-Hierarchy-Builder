@@ -58,7 +58,7 @@ function Register() {
       console.error("🚨 Fetch failed:", err);
       setLoading(false);
       setMessageType("error");
-      setMessage("❌ Network or server error. Check console.");
+      setMessage("❌ Network or server error. Try again");
     }
   };
   
