@@ -297,3 +297,20 @@ def reset_password():
         return jsonify({'error': 'User not found'}), 404
     # Invalidate token
     return jsonify({'message': 'Password reset successful!'}), 200
+
+
+@user_bp.route("/verify/<token>", methods=["GET"])
+def verify(token):
+    print(f"[Debug] /verify called with token: {token}", flush=True)
+    user = verify_token(token)
+    print(f"[Debug] verify_token returned: {user}", flush=True)
+    if user and 'username' in user and 'email' in user and 'password' in user:
+        with driver.session() as session:
+            session.run(f"""
+                MERGE (u:{NODE_LABEL} {{username: $username}})
+                SET u.email = $email, u.password = $password
+            """, username=user['username'], email=user['email'], password=user['password'])
+        return "✅ Your email has been verified and your account is now registered! You can now sign in using the credentials you provided."
+    else:
+        print(f"[Debug] Missing keys in user: {user}", flush=True)
+        return "❌ Invalid or expired token"
