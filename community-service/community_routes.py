@@ -240,7 +240,7 @@ def request_join():
                 RETURN 
                     creator.email AS creator_email,
                     u IS NOT NULL AND EXISTS((u)-[:REQUESTED]->(c)) AS already_requested,
-                    EXISTS((u)-[:MEMBER_OF]->(c)) AS already_member,
+                    m IS NOT NULL AS already_member,
                     creator.email = $email AS is_creator
             """, name=community_name, email=user_email)
 
