@@ -26,10 +26,10 @@ driver = GraphDatabase.driver(
 # 🔍 Get user details
 @community_bp.route("/user-details", methods=["GET"])
 def get_user_details():
-    token = request.cookies.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         email = payload.get("email")
@@ -66,10 +66,10 @@ def get_user_details():
 # ✏️ Update user details
 @community_bp.route("/update-user", methods=["POST"])
 def update_user():
-    token = request.cookies.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         email = payload.get("email")
@@ -102,10 +102,10 @@ def update_user():
         
 @community_bp.route("/register", methods=["POST"])
 def register_community():
-    token = request.cookies.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         creator_email = payload.get("email")
@@ -153,10 +153,10 @@ def register_community():
         
 @community_bp.route("/search", methods=["GET"])
 def search_communities():
-    token = request.cookies.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         current_user = payload.get("email")
@@ -195,10 +195,10 @@ def search_communities():
     
 @community_bp.route("/join", methods=["POST"])
 def request_join():
-    token = request.cookies.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         user_email = payload["email"]
@@ -293,10 +293,10 @@ def request_join():
 
 @community_bp.route("/join-response", methods=["POST"])
 def handle_join_response():
-    token = request.cookies.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         creator_email = payload.get("email")
@@ -363,10 +363,11 @@ def handle_join_response():
 
 @community_bp.route("/my-communities", methods=["GET"])
 def get_my_communities():
-    token = request.cookies.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Missing token"}), 401
     try:
+        token = auth_header.split(" ")[1]
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
     except Exception:
         return jsonify({"error": "Invalid token"}), 401

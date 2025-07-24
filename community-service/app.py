@@ -10,13 +10,14 @@ app = Flask(__name__)
 
 # Enable CORS (important for frontend-backend communication)
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+# Register the blueprint
+app.register_blueprint(community_bp, url_prefix="/api/community")
 CORS(app,
      origins=[FRONTEND_URL],
      methods=["GET", "POST", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"],
      supports_credentials=True)
-# Register the blueprint
-app.register_blueprint(community_bp, url_prefix="/api/community")
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5002))
