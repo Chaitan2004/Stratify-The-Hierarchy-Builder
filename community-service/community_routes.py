@@ -312,6 +312,7 @@ def request_join():
 
 @community_bp.route("/join-response", methods=["POST", "OPTIONS"])
 def handle_join_response():
+    print("⚠️ join-response route hit")  # <- Add this at the very top
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
 
@@ -323,6 +324,7 @@ def handle_join_response():
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         creator_email = payload.get("email")
     except jwt.InvalidTokenError:
+        print("failed")
         return jsonify({"error": "Invalid token"}), 401
 
     data = request.json
