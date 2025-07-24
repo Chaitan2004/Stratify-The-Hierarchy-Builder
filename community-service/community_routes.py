@@ -332,11 +332,10 @@ def handle_join_response():
     requester_email = data.get("requester_email")   # username of the user who requested
     community = data.get("community")   # name of the community
     decision = data.get("decision")     # 'accept' or 'reject'
-
-    print("Decision:", decision)
-    print("Requester:", requester)
-    print("Community:", community)
-
+    
+    print("Decision:", decision, flush=True)
+    print("Requester:", requester, flush=True)
+    print("Community:", community, flush=True)
 
     print(requester)
 
