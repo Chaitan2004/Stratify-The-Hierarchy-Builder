@@ -24,7 +24,7 @@ driver = GraphDatabase.driver(
     auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
 )
 # 🔍 Get user details
-@community_bp.route("/user-details", methods=["GET"])
+@community_bp.route("/user-details", methods=["GET","OPTIONS"])
 def get_user_details():
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
