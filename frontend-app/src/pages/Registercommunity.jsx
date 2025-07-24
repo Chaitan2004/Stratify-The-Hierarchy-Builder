@@ -32,10 +32,13 @@ function Registercommunity() {
     e.preventDefault();
     setLoading(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(community),
       });
       const data = await res.json();

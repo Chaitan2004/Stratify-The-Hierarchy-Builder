@@ -29,11 +29,14 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
+      const localToken = localStorage.getItem("token");
       const res = await fetch(`${USER_SERVICE_URL}/api/user/reset-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(localToken ? { Authorization: `Bearer ${localToken}` } : {}),
+        },
         body: JSON.stringify({ token, password }),
-        credentials: "include",
       });
       const data = await res.json();
       setLoading(false);

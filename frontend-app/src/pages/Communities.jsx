@@ -24,11 +24,14 @@ function Communities() {
   const confirmDeleteCommunity = async () => {
     if (!deleteCommunity.name) return;
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/delete-community`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ community: deleteCommunity.name }),
-        credentials: "include"
       });
       if (res.ok) {
         toast.success("Community deleted.");
@@ -45,8 +48,11 @@ function Communities() {
 
   useEffect(() => {
     setLoading(true);
+    const token = localStorage.getItem("token");
     fetch(`${COMMUNITY_SERVICE_URL}/api/community/my-communities`, {
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => res.json())
       .then((data) => {
@@ -69,7 +75,12 @@ function Communities() {
     if (selected !== null && communities[selected]) {
       setLeaderLoading(true);
       setLeaderNode(null);
-      fetch(`${COMMUNITY_SERVICE_URL}/api/community/leader-node-and-tree?community=${encodeURIComponent(communities[selected].name)}`)
+      const token = localStorage.getItem("token");
+      fetch(`${COMMUNITY_SERVICE_URL}/api/community/leader-node-and-tree?community=${encodeURIComponent(communities[selected].name)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
         .then(res => res.json())
         .then(data => {
           if (data && !data.error) {
@@ -91,9 +102,12 @@ function Communities() {
 
   // Fetch current user's username
   useEffect(() => {
+    const token = localStorage.getItem("token");
     fetch(`${USER_SERVICE_URL}/api/user/verify-token`, {
       method: "GET",
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => res.json())
       .then((data) => {

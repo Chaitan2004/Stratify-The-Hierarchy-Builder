@@ -10,8 +10,11 @@ function Notifications() {
   const [notifs, setNotifs] = useState([]);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
     fetch(`${NOTIFICATION_SERVICE_URL}/api/notify/fetch`, {
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => res.json())
       .then((data) => {
@@ -48,10 +51,13 @@ function Notifications() {
     }
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/join-response`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           requester: notif.sender,
           community,

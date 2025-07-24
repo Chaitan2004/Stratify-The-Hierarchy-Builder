@@ -23,12 +23,13 @@ function Register() {
     console.log("📤 Submitting form data:", formData);
   
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${USER_SERVICE_URL}/api/user/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        credentials: "include", // Needed only if using cookies
         body: JSON.stringify(formData),
       });
   

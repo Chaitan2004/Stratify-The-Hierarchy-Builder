@@ -7,13 +7,17 @@ NODE_LABEL_NOTIFICATION = "notifications_notification"
 
 notification_bp = Blueprint("notifications", __name__)
 
-@notification_bp.route("/", methods=["POST"])
+@notification_bp.route("/", methods=["POST", "OPTIONS"])
 def create_notification():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
     # 🔐 Extract token
-    token = request.cookies.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    print("[DEBUG] Auth header (create_notification):", auth_header)
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
+    print("[DEBUG] Token (create_notification):", token)
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         sender_email = payload["email"]
@@ -67,12 +71,14 @@ def create_notification():
 
 
 # 📥 Get latest 20 notifications
-@notification_bp.route("/fetch", methods=["GET"])
+@notification_bp.route("/fetch", methods=["GET", "OPTIONS"])
 def get_notifications():
-    token = request.cookies.get("token")
-    if not token:
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         user_email = payload["email"]
@@ -94,12 +100,16 @@ def get_notifications():
         notifications = [record.data() for record in result]
         return jsonify(notifications), 200
 
-@notification_bp.route("/mark-handled", methods=["POST"])
+@notification_bp.route("/mark-handled", methods=["POST", "OPTIONS"])
 def mark_notification_handled():
-    token = request.cookies.get("token")
-    if not token:
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    auth_header = request.headers.get("Authorization")
+    print("[DEBUG] Auth header (mark_notification_handled):", auth_header)
+    if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
-
+    token = auth_header.split(" ")[1]
+    print("[DEBUG] Token (mark_notification_handled):", token)
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         creator_email = payload["email"]

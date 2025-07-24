@@ -14,8 +14,11 @@ function Details() {
 
   // Fetch user info on load
   useEffect(() => {
+    const token = localStorage.getItem("token");
     fetch(`${USER_SERVICE_URL}/api/user/me`, {
-      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => {
         if (!res.ok) throw new Error("Unauthorized");
@@ -36,10 +39,13 @@ function Details() {
     }
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${USER_SERVICE_URL}/api/user/update-username`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ username: newUsername }),
       });
 
@@ -67,10 +73,13 @@ function Details() {
     }
 
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${USER_SERVICE_URL}/api/user/update-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(passwords),
       });
 

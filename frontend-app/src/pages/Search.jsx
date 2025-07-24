@@ -15,10 +15,13 @@ function SearchPage() {
 
     setLoading(true);
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${COMMUNITY_SERVICE_URL}/api/community/search?q=${encodeURIComponent(query)}`,
         {
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       const data = await res.json();
@@ -36,10 +39,13 @@ function SearchPage() {
 
   const handleJoin = async (communityName) => {
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${COMMUNITY_SERVICE_URL}/api/community/join`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ community: communityName }),
       });
 

@@ -71,8 +71,11 @@ def get_user_details():
         return jsonify(user_data), 200
 
 # ✏️ Update user details
-@community_bp.route("/update-user", methods=["POST"])
+@community_bp.route("/update-user", methods=["POST", "OPTIONS"])
 def update_user():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -107,8 +110,11 @@ def update_user():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
         
-@community_bp.route("/register", methods=["POST"])
+@community_bp.route("/register", methods=["POST", "OPTIONS"])
 def register_community():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -158,8 +164,11 @@ def register_community():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
         
-@community_bp.route("/search", methods=["GET"])
+@community_bp.route("/search", methods=["GET", "OPTIONS"])
 def search_communities():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -200,8 +209,11 @@ def search_communities():
 
         return jsonify(communities), 200
     
-@community_bp.route("/join", methods=["POST"])
+@community_bp.route("/join", methods=["POST", "OPTIONS"])
 def request_join():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -298,8 +310,11 @@ def request_join():
 
     
 
-@community_bp.route("/join-response", methods=["POST"])
+@community_bp.route("/join-response", methods=["POST", "OPTIONS"])
 def handle_join_response():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -368,8 +383,11 @@ def handle_join_response():
     return jsonify({"message": f"User {decision}ed successfully"}), 200
 
 
-@community_bp.route("/my-communities", methods=["GET"])
+@community_bp.route("/my-communities", methods=["GET", "OPTIONS"])
 def get_my_communities():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Missing token"}), 401
@@ -404,8 +422,11 @@ def get_my_communities():
     return jsonify(communities)
 
 
-@community_bp.route("/user/update-username", methods=["POST"])
+@community_bp.route("/user/update-username", methods=["POST", "OPTIONS"])
 def update_username_community():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     data = request.json
     email = data.get("email")
     new_username = data.get("new_username")
@@ -426,8 +447,11 @@ def update_username_community():
         return jsonify({"error": str(e)}), 500
 
 
-@community_bp.route("/leader-node-and-tree", methods=["GET"])
+@community_bp.route("/leader-node-and-tree", methods=["GET", "OPTIONS"])
 def get_leader_and_tree():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     community_name = request.args.get("community")
     if not community_name:
         return jsonify({"error": "Community name is required"}), 400
@@ -487,8 +511,11 @@ def get_leader_and_tree():
         })
 
 
-@community_bp.route("/create-child-of", methods=["POST"])
+@community_bp.route("/create-child-of", methods=["POST", "OPTIONS"])
 def create_child_of():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     data = request.json
     community_name = data.get("community")
     from_username = data.get("from")
@@ -513,8 +540,11 @@ def create_child_of():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@community_bp.route("/delete-user-node", methods=["POST"])
+@community_bp.route("/delete-user-node", methods=["POST", "OPTIONS"])
 def delete_user_node():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     data = request.json
     community_name = data.get("community")
     username = data.get("username")
@@ -537,8 +567,11 @@ def delete_user_node():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@community_bp.route("/get-user-details", methods=["GET"])
+@community_bp.route("/get-user-details", methods=["GET", "OPTIONS"])
 def get_user_details_by_username():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     username = request.args.get("username")
     if not username:
         return jsonify({"error": "Missing username"}), 400
@@ -570,8 +603,11 @@ def get_user_details_by_username():
         }
         return jsonify(user_data), 200
 
-@community_bp.route("/delete-community", methods=["POST"])
+@community_bp.route("/delete-community", methods=["POST", "OPTIONS"])
 def delete_community():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     data = request.json
     community_name = data.get("community")
     if not community_name:
@@ -598,8 +634,11 @@ def delete_community():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@community_bp.route("/members", methods=["GET"])
+@community_bp.route("/members", methods=["GET", "OPTIONS"])
 def get_community_members():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     community_name = request.args.get("community")
     if not community_name:
         return jsonify({"error": "Missing community name"}), 400
@@ -627,8 +666,11 @@ def get_community_members():
             "members": members
         })
 
-@community_bp.route("/remove-member", methods=["POST"])
+@community_bp.route("/remove-member", methods=["POST", "OPTIONS"])
 def remove_member():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     data = request.json
     community_name = data.get("community")
     username = data.get("username")

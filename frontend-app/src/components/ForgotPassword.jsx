@@ -12,10 +12,13 @@ export default function ForgotPassword() {
     setLoading(true);
     setMessage("");
     try {
+      const token = localStorage.getItem("token");
       const res = await fetch(`${USER_SERVICE_URL}/api/user/forgot-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
