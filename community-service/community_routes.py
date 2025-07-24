@@ -275,7 +275,7 @@ def request_join():
 
         # Step 4: Notify the creator
         message = f"{full_name} requested to join your community '{community_name}'"
-        response = requests.post(NOTIFY_URL + "/api/notify", json={
+        response = requests.post(NOTIFY_URL + "/api/notify/", json={
             "to": creator_email,
             "message": message,
             "type": "join_request"
