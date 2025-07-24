@@ -331,6 +331,11 @@ def handle_join_response():
     community = data.get("community")   # name of the community
     decision = data.get("decision")     # 'accept' or 'reject'
 
+    print("Decision:", decision)
+    print("Requester:", requester)
+    print("Community:", community)
+
+
     print(requester)
 
     if not requester or not community or decision not in ("accept", "reject"):
