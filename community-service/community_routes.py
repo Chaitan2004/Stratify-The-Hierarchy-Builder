@@ -24,8 +24,11 @@ driver = GraphDatabase.driver(
     auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
 )
 # 🔍 Get user details
-@community_bp.route("/user-details", methods=["GET","OPTIONS"])
+@community_bp.route("/user-details", methods=["GET", "OPTIONS"])
 def get_user_details():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -38,12 +41,16 @@ def get_user_details():
         return jsonify({"error": "Invalid token"}), 401
 
     with driver.session() as session:
-        result = session.run(f"""
+        result = session.run(
+            f"""
             MERGE (u:{NODE_LABEL_USER} {{email: $email}})
             ON CREATE SET u.public_email = $email
             ON CREATE SET u.username = $username
             RETURN u
-        """, email=email, username= username)
+            """,
+            email=email,
+            username=username,
+        )
 
         record = result.single()
         user_node = record["u"]
@@ -59,7 +66,7 @@ def get_user_details():
             "linkedin": user_node.get("linkedin"),
             "github": user_node.get("github"),
             "twitter": user_node.get("twitter"),
-            "website": user_node.get("website")
+            "website": user_node.get("website"),
         }
         return jsonify(user_data), 200
 
