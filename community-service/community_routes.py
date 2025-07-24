@@ -279,7 +279,7 @@ def request_join():
             "to": creator_email,
             "message": message,
             "type": "join_request"
-        }, cookies={"token": token})
+        }, headers={"Authorization": f"Bearer {token}"})
 
         if response.status_code != 201:
             print("Notification failed:", response.text)
@@ -362,7 +362,7 @@ def handle_join_response():
                 "message": message,
                 "type": "system"
             },
-            cookies={"token": token}
+            headers={"Authorization": f"Bearer {token}"}
         )
     except Exception as e:
         print("Failed to notify user:", e)
@@ -375,7 +375,7 @@ def handle_join_response():
                 "community": community,
                 "decision": decision
             },
-            cookies={"token": token}
+            headers={"Authorization": f"Bearer {token}"}
         )
     except Exception as e:
         print("Failed to update original notification:", e)
