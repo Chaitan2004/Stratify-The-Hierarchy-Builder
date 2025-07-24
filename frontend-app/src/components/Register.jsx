@@ -20,7 +20,6 @@ function Register() {
     setLoading(true);
     setMessage(null);
   
-    console.log("📤 Submitting form data:", formData);
   
     try {
       const token = localStorage.getItem("token");
@@ -33,7 +32,6 @@ function Register() {
         body: JSON.stringify(formData),
       });
   
-      console.log("📥 Raw response:", res);
   
       let data;
       try {
@@ -43,7 +41,6 @@ function Register() {
         throw new Error("Invalid JSON response from server.");
       }
   
-      console.log("📦 Parsed response data:", data);
       setLoading(false);
   
       if (res.ok) {
