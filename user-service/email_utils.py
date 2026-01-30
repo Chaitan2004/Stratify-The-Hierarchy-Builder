@@ -11,7 +11,7 @@ SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USER)
 FROM_NAME = os.getenv("FROM_NAME", "Stratify")
-BACKEND_URL = os.getenv("USER_URL")
+BACKEND_URL = os.getenv("BACKEND_URL")
 
 def send_verification_email(to_email, token):
     msg = EmailMessage()
