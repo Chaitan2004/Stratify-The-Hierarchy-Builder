@@ -27,8 +27,11 @@ driver = GraphDatabase.driver(
     auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
 )
 
-@user_bp.route("/register", methods=["POST"])
+@user_bp.route("/register", methods=["POST", "OPTIONS"])
 def register():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     data = request.json
     username = data.get("username")
     email = data.get("email")
@@ -66,8 +69,11 @@ def register():
 
 
 
-@user_bp.route("/signin", methods=["POST"])
+@user_bp.route("/signin", methods=["POST", "OPTIONS"])
 def signin():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     data = request.json
     identifier = data.get("identifier")  # username or email
     password = data.get("password")
@@ -96,8 +102,11 @@ def signin():
 
         return jsonify({"error": "Invalid username/email or password"}), 401
     
-@user_bp.route("/verify-token", methods=["GET"])
+@user_bp.route("/verify-token", methods=["GET", "OPTIONS"])
 def verify_token_for_home():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     payload, error_response, status = verify_jwt_token()
 
     if error_response:
@@ -108,12 +117,18 @@ def verify_token_for_home():
 
     return jsonify({"username": payload["username"]})
 
-@user_bp.route("/logout", methods=["POST"])
+@user_bp.route("/logout", methods=["POST", "OPTIONS"])
 def logout():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     return jsonify({"message": "Logged out"}), 200
 
-@user_bp.route("/update-username", methods=["POST"])
+@user_bp.route("/update-username", methods=["POST", "OPTIONS"])
 def update_username():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -170,8 +185,11 @@ def update_username():
         "redirect_url": "/signin"
     }), 200
 
-@user_bp.route("/update-password", methods=["POST"])
+@user_bp.route("/update-password", methods=["POST", "OPTIONS"])
 def update_password():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -213,8 +231,11 @@ def update_password():
         "redirect_url": "/signin"
     }), 200
 
-@user_bp.route("/me", methods=["GET"])
+@user_bp.route("/me", methods=["GET", "OPTIONS"])
 def get_user_info():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         return jsonify({"error": "Unauthorized"}), 401
@@ -241,8 +262,11 @@ def get_user_info():
             "email": user["email"]
         })
 
-@user_bp.route('/forgot-password', methods=['POST'])
+@user_bp.route('/forgot-password', methods=['POST', 'OPTIONS'])
 def forgot_password():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     data = request.json
     email = data.get('email')
     if not email:
@@ -269,8 +293,11 @@ def forgot_password():
     print(f"[Password Reset] Sent to {email}: {reset_link}")
     return jsonify({'message': 'If an account exists, a reset link has been sent to your email.'}), 200
 
-@user_bp.route('/reset-password', methods=['POST'])
+@user_bp.route('/reset-password', methods=['POST', 'OPTIONS'])
 def reset_password():
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     data = request.json
     token = data.get('token')
     new_password = data.get('password')
@@ -299,8 +326,11 @@ def reset_password():
     return jsonify({'message': 'Password reset successful!'}), 200
 
 
-@user_bp.route("/verify/<token>", methods=["GET"])
+@user_bp.route("/verify/<token>", methods=["GET", "OPTIONS"])
 def verify(token):
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"}), 200
+    
     print(f"[Debug] /verify called with token: {token}", flush=True)
     user = verify_token(token)
     print(f"[Debug] verify_token returned: {user}", flush=True)

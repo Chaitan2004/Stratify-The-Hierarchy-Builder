@@ -11,27 +11,23 @@ NOTIFY_URL = os.getenv("NOTIFY_URL")
 COMMUNITY_URL = os.getenv("COMMUNITY_URL")
 USER_URL = os.getenv("USER_URL")
 FRONTEND_URL = os.getenv("FRONTEND_URL")
-
 NODE_LABEL_USER = "communityservice_usernode"
 NODE_LABEL_COMMUNITY = "communityservice_community"
-
 community_bp = Blueprint("community", __name__)
 SECRET_KEY = os.getenv("SECRET_KEY")
-
 
 driver = GraphDatabase.driver(
     os.getenv("NEO4J_URI"),
     auth=(os.getenv("NEO4J_USER"), os.getenv("NEO4J_PASSWORD"))
 )
-# 🔍 Get user details
+
+# Get user details
 @community_bp.route("/user-details", methods=["GET", "OPTIONS"])
 def get_user_details():
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
-
+    
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -70,15 +66,13 @@ def get_user_details():
         }
         return jsonify(user_data), 200
 
-# ✏️ Update user details
+# Update user details
 @community_bp.route("/update-user", methods=["POST", "OPTIONS"])
 def update_user():
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
-
+    
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -87,9 +81,7 @@ def update_user():
         return jsonify({"error": "Invalid token"}), 401
 
     data = request.json
-    if "email" in data:
-        del data["email"]  # Prevent changing private email key
-
+     
     if "public_email" in data:
         new_public_email = data["public_email"]
     else:
@@ -110,14 +102,13 @@ def update_user():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
         
+# Register a community
 @community_bp.route("/register", methods=["POST", "OPTIONS"])
 def register_community():
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
-
+    
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -146,7 +137,6 @@ def register_community():
 
     with driver.session() as session:
         try:
-            # ✅ Create community and link with creator
             session.run(f"""
                 MERGE (u:{NODE_LABEL_USER} {{email: $creator_email}})
                 CREATE (c:{NODE_LABEL_COMMUNITY} {{
@@ -168,10 +158,8 @@ def register_community():
 def search_communities():
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
-
+    
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -213,10 +201,8 @@ def search_communities():
 def request_join():
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
-
+    
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -232,7 +218,6 @@ def request_join():
 
     try:
         with driver.session() as session:
-            # Step 1: Check all conditions and get creator email
             result = session.run(f"""
                 MATCH (c:{NODE_LABEL_COMMUNITY} {{name: $name}})<-[:CREATED]-(creator:{NODE_LABEL_USER})
                 OPTIONAL MATCH (u:{NODE_LABEL_USER} {{email: $email}})-[:REQUESTED]->(c)
@@ -247,7 +232,6 @@ def request_join():
             record = result.single()
             if not record:
                 return jsonify({"error": "Community not found"}), 404
-
             if record["already_requested"]:
                 return jsonify({"error": "Already requested to join"}), 400
             if record["already_member"]:
@@ -257,14 +241,12 @@ def request_join():
 
             creator_email = record["creator_email"]
 
-            # Step 2: Create request relationship
             session.run(f"""
                 MERGE (u:{NODE_LABEL_USER} {{email: $email}})
                 MERGE (c:{NODE_LABEL_COMMUNITY} {{name: $name}})
                 MERGE (u)-[:REQUESTED]->(c)
             """, email=user_email, name=community_name)
 
-            # Step 3: Fetch user's name for message
             name_result = session.run(f"""
                 MATCH (u:{NODE_LABEL_USER} {{email: $email}})
                 RETURN u.name AS name
@@ -273,7 +255,7 @@ def request_join():
             name_record = name_result.single()
             full_name = name_record["name"] if name_record and name_record["name"] else "Unknown Person"
 
-        # Step 4: Notify the creator
+        # Notify the creator
         message = f"{full_name} requested to join your community '{community_name}'"
         response = requests.post(NOTIFY_URL + "/api/notify/", json={
             "to": creator_email,
@@ -282,8 +264,6 @@ def request_join():
         }, headers={"Authorization": f"Bearer {token}"})
 
         if response.status_code != 201:
-            print("Notification failed:", response.text)
-            # Rollback request edge if notify fails
             with driver.session() as session:
                 session.run(f"""
                     MATCH (u:{NODE_LABEL_USER} {{email: $email}})-[r:REQUESTED]->(c:{NODE_LABEL_COMMUNITY} {{name: $name}})
@@ -295,7 +275,6 @@ def request_join():
         return jsonify({"message": "Join request sent"}), 200
 
     except Exception as e:
-        # Rollback on any exception
         try:
             with driver.session() as session:
                 session.run(f"""
@@ -312,36 +291,21 @@ def request_join():
 
 @community_bp.route("/join-response", methods=["POST", "OPTIONS"])
 def handle_join_response():
-    print("⚠️ join-response route hit")  # <- Add this at the very top
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
-
+    
     auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
     token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        creator_email = payload.get("email")
     except jwt.InvalidTokenError:
-        print("failed")
         return jsonify({"error": "Invalid token"}), 401
 
     data = request.json
-    requester = data.get("requester")   # username of the user who requested
-    requester_email = data.get("requester_email")   # username of the user who requested
-    community = data.get("community")   # name of the community
-    decision = data.get("decision")     # 'accept' or 'reject'
-    
-    print("Decision:", decision, flush=True)
-    print("Requester:", requester, flush=True)
-    print("Community:", community, flush=True)
-
-    print(requester)
-
-    if not requester or not community or decision not in ("accept", "reject"):
-        return jsonify({"error": "Missing or invalid data"}), 400
-    
+    requester = data.get("requester")   
+    requester_email = data.get("requester_email")  
+    community = data.get("community")
+    decision = data.get("decision")
 
     with driver.session() as session:
         if decision == "accept":
@@ -358,7 +322,7 @@ def handle_join_response():
                 DELETE req
             """, community=community, requester_email=requester_email)
 
-    # ✅ Send final notification to the requester
+    # Send final notification to the requester
     message = f"Your request to join '{community}' was {'accepted' if decision == 'accept' else 'rejected'}"
     try:
         requests.post(
@@ -391,42 +355,48 @@ def handle_join_response():
 
 @community_bp.route("/my-communities", methods=["GET", "OPTIONS"])
 def get_my_communities():
-    print("⚠️ join-response route hit", flush=True)  # <- Add this at the very top
+    # ✅ Handle CORS preflight
     if request.method == "OPTIONS":
         return jsonify({"status": "ok"}), 200
 
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Missing token"}), 401
+        return jsonify({"error": "Missing or invalid Authorization header"}), 401
+
+    token = auth_header.split(" ")[1]
+
     try:
-        token = auth_header.split(" ")[1]
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-    except Exception:
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token expired"}), 401
+    except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid token"}), 401
+
     username = payload.get("username")
     if not username:
         return jsonify({"error": "User not found in token"}), 401
+
     query = f"""
     MATCH (u:{NODE_LABEL_USER} {{username: $username}})-[:CREATED|MEMBER_OF]->(c:{NODE_LABEL_COMMUNITY})
     WITH DISTINCT c
     OPTIONAL MATCH (leader:{NODE_LABEL_USER})-[:CREATED]->(c)
     RETURN c, leader.username AS leader_username, leader.name AS leader
     """
+
+    communities = []
     with driver.session() as session:
         result = session.run(query, username=username)
-        communities = []
         for record in result:
             c = record["c"]
-            leader_username = record["leader_username"]
-            leader_name = record["leader"]
             communities.append({
                 "name": c.get("name"),
                 "level": c.get("level"),
                 "motto": c.get("motto"),
-                "leader_username": leader_username,
-                "leader": leader_name
+                "leader_username": record["leader_username"],
+                "leader": record["leader"]
             })
-    return jsonify(communities)
+
+    return jsonify(communities), 200
 
 
 @community_bp.route("/user/update-username", methods=["POST", "OPTIONS"])
@@ -508,9 +478,6 @@ def get_leader_and_tree():
                 "email": leader["email"],
                 "name": leader["name"]
             }
-        print("Leader:", leader)
-        print("Nodes:", nodes)
-        print("Relationships:", rels)
         return jsonify({
             "leader": dict(leader),
             "nodes": list(nodes.values()),

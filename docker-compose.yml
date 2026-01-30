@@ -1,0 +1,30 @@
+services:
+  user-service:
+    build: ./user-service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./user-service/.env
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+
+  community-service:
+    build: ./community-service
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./community-service/.env
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "5003:5003"
+    env_file:
+      - ./notification-service/.env
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5

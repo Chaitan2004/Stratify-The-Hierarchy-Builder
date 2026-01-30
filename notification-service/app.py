@@ -14,9 +14,8 @@ CORS(app,
      methods=["GET", "POST", "OPTIONS"],
      allow_headers=["Content-Type", "Authorization"],
      supports_credentials=True)
-# ✅ Register Blueprint
 app.register_blueprint(notification_bp, url_prefix="/api/notify")
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5003))
-    app.run(host="0.0.0.0", port=port)
+# if __name__ == "__main__":
+#     port = int(os.environ.get("PORT", 5003))
+#     app.run(host="0.0.0.0", port=port)

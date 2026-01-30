@@ -13,3 +13,6 @@ dist/
 # System files
 .DS_Store
 Thumbs.db
+
+# Deployment files
+deployment_files/
