@@ -56,7 +56,7 @@ A modern, microservices-based community application built with React, Flask, and
 - **Authentication:** JWT (Bearer tokens, no cookies)
 - **Notifications:** Microservice with Neo4j
 - **AI:** CopilotKit (OpenAI, Ollama, CopilotKit Cloud)
-- **Deployment:** Docker, Render.com
+- **Deployment:** Docker, AWS, Vercel
 
 ---
 
